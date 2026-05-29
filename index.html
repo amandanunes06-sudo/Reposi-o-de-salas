@@ -76,6 +76,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .hist-status.pendente{background:#FFF3E0;color:#E65100}
 .hist-status.andamento{background:#E3F2FD;color:#1565C0}
 .hist-status.atendido{background:#E8F5E9;color:#2E7D32}
+.hist-status.parcial{background:#FFF8E1;color:#F57F17}
 .hist-items{font-size:11px;color:#666;line-height:1.8}
 .hist-sup{font-size:12px;font-weight:600;color:#1a1a1a;margin-top:7px;margin-bottom:2px}
 /* LOGIN */
@@ -98,6 +99,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .status-pendente{background:#FFF3E0;color:#E65100}
 .status-andamento{background:#E3F2FD;color:#1565C0}
 .status-atendido{background:#E8F5E9;color:#2E7D32}
+.status-parcial{background:#FFF8E1;color:#F57F17}
 .painel-items{font-size:11px;color:#555;line-height:1.9;border-top:1px solid #f5f5f5;padding-top:10px}
 .painel-sup{font-size:12px;font-weight:700;color:#1a1a1a;margin-top:8px;margin-bottom:2px}
 .painel-email{font-size:11px;color:#888;margin-top:6px}
@@ -162,6 +164,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <button class="filter-btn active" onclick="setPainelFiltro('todos')" id="f-todos">Todos</button>
     <button class="filter-btn" onclick="setPainelFiltro('pendente')" id="f-pendente">⏳ Pendentes</button>
     <button class="filter-btn" onclick="setPainelFiltro('andamento')" id="f-andamento">🔄 Em andamento</button>
+    <button class="filter-btn" onclick="setPainelFiltro('parcial')" id="f-parcial">⚠️ Parcial</button>
     <button class="filter-btn" onclick="setPainelFiltro('atendido')" id="f-atendido">✅ Atendidos</button>
   </div>
   <div class="section" id="painel-list"></div>
@@ -462,7 +465,7 @@ function renderHistLocal(){
   c.innerHTML=html;
 }
 
-function labelStatus(s){return s==='pendente'?'⏳ Pendente':s==='andamento'?'🔄 Em andamento':'✅ Atendido';}
+function labelStatus(s){return s==='pendente'?'⏳ Pendente':s==='andamento'?'🔄 Em andamento':s==='parcial'?'⚠️ Atendido Parcialmente':'✅ Atendido';}
 
 window.switchTab=function(t){
   document.getElementById('view-p').style.display=t==='pedido'?'':'none';
@@ -524,7 +527,7 @@ function carregarPedidosFirebase(){
 
 window.setPainelFiltro=function(f){
   painelFiltro=f;
-  ['todos','pendente','andamento','atendido'].forEach(x=>{
+  ['todos','pendente','andamento','parcial','atendido'].forEach(x=>{
     document.getElementById('f-'+x).className='filter-btn'+(f===x?' active':'');
   });
   renderPainel();
@@ -544,9 +547,10 @@ function renderPainel(){
           <h3>📅 ${p.data}</h3>
           <p>${p.sala} · ${p.total} item(ns)</p>
         </div>
-        <select class="status-select status-${st}" onchange="mudarStatus('${id}',this.value)">
+        <select class="status-select status-${st}" onchange="mudarStatus('${id}',this.value,this)">
           <option value="pendente" ${st==='pendente'?'selected':''}>⏳ Pendente</option>
           <option value="andamento" ${st==='andamento'?'selected':''}>🔄 Em andamento</option>
+          <option value="parcial" ${st==='parcial'?'selected':''}>⚠️ Atend. Parcial</option>
           <option value="atendido" ${st==='atendido'?'selected':''}>✅ Atendido</option>
         </select>
       </div>
@@ -556,16 +560,32 @@ function renderPainel(){
       html+=items.map(i=>`• ${i.qty}× ${i.name}`).join('<br>');
     });
     if(p.emailSolicitante)html+=`<div class="painel-email">📧 ${p.emailSolicitante}</div>`;
+    const obs=p.observacao||'';
+    html+=`<div style="margin-top:10px;border-top:1px solid #f0f0f0;padding-top:10px">
+      <div style="font-size:11px;font-weight:700;color:#888;margin-bottom:5px">📝 OBSERVAÇÃO / ITENS FALTANTES</div>
+      <textarea id="obs-${id}" rows="3" style="width:100%;font-size:12px;padding:8px;border:1px solid #e0e0e0;border-radius:8px;resize:vertical;outline:none;font-family:inherit;color:#333" placeholder="Ex: Faltou SYNERGY XD 3X12MM e RYUREI 2,50X15...">${obs}</textarea>
+      <button onclick="salvarObs('${id}')" style="margin-top:6px;padding:7px 16px;background:#1a73e8;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">Salvar observação</button>
+    </div>`;
     html+=`</div></div>`;
   });
   c.innerHTML=html;
 }
 
-window.mudarStatus=async function(id,novoStatus){
+window.mudarStatus=async function(id,novoStatus,sel){
   try{
     await update(ref(db,`pedidos/${id}`),{status:novoStatus});
+    // Atualiza cor do select dinamicamente
+    sel.className='status-select status-'+novoStatus;
     showToast('Status atualizado!');
   }catch(e){showToast('Erro ao atualizar.');}
+};
+
+window.salvarObs=async function(id){
+  const obs=document.getElementById('obs-'+id).value.trim();
+  try{
+    await update(ref(db,`pedidos/${id}`),{observacao:obs});
+    showToast('✅ Observação salva!');
+  }catch(e){showToast('Erro ao salvar observação.');}
 };
 
 function showToast(m){
