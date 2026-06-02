@@ -111,6 +111,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .toast.show{opacity:1}
 .empty{text-align:center;padding:40px 20px;color:#aaa;font-size:14px}
 .spinner{text-align:center;padding:40px;color:#888;font-size:13px}
+/* FAVORITOS E OCULTOS */
+.item-fav{font-size:16px;cursor:pointer;flex-shrink:0;padding:0 4px;line-height:1;user-select:none;-webkit-tap-highlight-color:transparent}
+.fav-filter-bar{display:flex;gap:8px;padding:8px 16px 4px;background:#fff;border-bottom:1px solid #e8e8e8;overflow-x:auto}
+.fav-btn{padding:5px 14px;border-radius:20px;border:1px solid #e0e0e0;background:#fff;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;color:#555;display:flex;align-items:center;gap:4px}
+.fav-btn.active{background:#1a73e8;color:#fff;border-color:#1a73e8}
+/* PAINEL MATERIAIS */
+.mat-item{display:flex;align-items:center;gap:8px;padding:8px 13px;border-bottom:1px solid #f5f5f5;font-size:12px;color:#333}
+.mat-item:last-child{border-bottom:none}
+.mat-name{flex:1}
+.mat-toggle{padding:4px 12px;border-radius:20px;border:none;font-size:11px;font-weight:600;cursor:pointer}
+.mat-toggle.ativo{background:#E8F5E9;color:#2E7D32}
+.mat-toggle.oculto{background:#FFEBEE;color:#C62828}
+.painel-sub-tabs{display:flex;background:#f8f8f8;border-bottom:1px solid #e8e8e8}
+.painel-sub-tab{flex:1;text-align:center;padding:9px 4px;font-size:12px;color:#888;cursor:pointer;border-bottom:2px solid transparent}
+.painel-sub-tab.active{color:#1a1a1a;border-bottom:2px solid #1a73e8;font-weight:600}
+.mat-group-label{font-size:10px;font-weight:700;color:#999;background:#f8f8f8;padding:4px 13px;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid #f0f0f0}
 </style>
 </head>
 <body>
@@ -150,6 +166,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <!-- PEDIDO -->
 <div id="view-p">
   <div class="search-bar"><input type="text" placeholder="🔍 Buscar material..." oninput="filterItems(this.value)" id="srch"></div>
+  <div class="fav-filter-bar">
+    <button class="fav-btn active" onclick="setFavFiltro('todos')" id="ff-todos">📋 Todos</button>
+    <button class="fav-btn" onclick="setFavFiltro('favoritos')" id="ff-favoritos">⭐ Favoritos</button>
+  </div>
   <div class="section" id="sup-list"></div>
 </div>
 
@@ -160,14 +180,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 <!-- PAINEL GESTÃO -->
 <div id="view-g" style="display:none">
-  <div class="filter-bar">
-    <button class="filter-btn active" onclick="setPainelFiltro('todos')" id="f-todos">Todos</button>
-    <button class="filter-btn" onclick="setPainelFiltro('pendente')" id="f-pendente">⏳ Pendentes</button>
-    <button class="filter-btn" onclick="setPainelFiltro('andamento')" id="f-andamento">🔄 Em andamento</button>
-    <button class="filter-btn" onclick="setPainelFiltro('parcial')" id="f-parcial">⚠️ Parcial</button>
-    <button class="filter-btn" onclick="setPainelFiltro('atendido')" id="f-atendido">✅ Atendidos</button>
+  <div class="painel-sub-tabs">
+    <div class="painel-sub-tab active" onclick="setPainelSubTab('pedidos')" id="pst-pedidos">📋 Pedidos</div>
+    <div class="painel-sub-tab" onclick="setPainelSubTab('materiais')" id="pst-materiais">🗂️ Materiais</div>
   </div>
-  <div class="section" id="painel-list"></div>
+  <!-- SUB: PEDIDOS -->
+  <div id="pg-pedidos">
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="setPainelFiltro('todos')" id="f-todos">Todos</button>
+      <button class="filter-btn" onclick="setPainelFiltro('pendente')" id="f-pendente">⏳ Pendentes</button>
+      <button class="filter-btn" onclick="setPainelFiltro('andamento')" id="f-andamento">🔄 Em andamento</button>
+      <button class="filter-btn" onclick="setPainelFiltro('parcial')" id="f-parcial">⚠️ Parcial</button>
+      <button class="filter-btn" onclick="setPainelFiltro('atendido')" id="f-atendido">✅ Atendidos</button>
+    </div>
+    <div class="section" id="painel-list"></div>
+  </div>
+  <!-- SUB: MATERIAIS -->
+  <div id="pg-materiais" style="display:none">
+    <div class="section" id="mat-list"></div>
+  </div>
   <div style="text-align:center;padding:10px">
     <button onclick="logoutPainel()" style="background:none;border:1px solid #ddd;border-radius:8px;padding:8px 18px;font-size:12px;color:#888;cursor:pointer">Sair do painel</button>
   </div>
@@ -298,13 +329,30 @@ groups:{
 // Estado
 let quantities={}, openSup={}, histLocal=[], sala='SALA 01', filter='';
 let painelFiltro='todos', todosPedidos={}, usuarioLogado=null;
+let favFiltro='todos';
+let favoritos={};   // chave: sid+'||'+item → true
+let ocultos={};     // chave: sid+'||'+item → true (gerenciado pela gestão, salvo no Firebase)
 SUPPLIERS.forEach(s=>openSup[s.id]=false);
 
 function salvarLocal(){try{localStorage.setItem('hemo_qty',JSON.stringify(quantities));}catch(e){}}
 function salvarHistLocal(){try{localStorage.setItem('hemo_hist',JSON.stringify(histLocal));}catch(e){}}
+function salvarFavoritos(){try{localStorage.setItem('hemo_favs',JSON.stringify(favoritos));}catch(e){}}
 function carregarLocal(){
   try{const r=localStorage.getItem('hemo_qty');if(r)quantities=JSON.parse(r);}catch(e){}
   try{const r=localStorage.getItem('hemo_hist');if(r)histLocal=JSON.parse(r);}catch(e){}
+  try{const r=localStorage.getItem('hemo_favs');if(r)favoritos=JSON.parse(r);}catch(e){}
+}
+function isFav(sid,item){return !!favoritos[sid+'||'+item];}
+function isOculto(sid,item){return !!ocultos[sid+'||'+item];}
+
+// Carregar ocultos do Firebase (compartilhado entre todos)
+function carregarOcultos(){
+  onValue(ref(db,'ocultos'),snap=>{
+    ocultos={};
+    if(snap.exists())ocultos=snap.val()||{};
+    renderSuppliers();
+    if(usuarioLogado)renderMateriaisGestao();
+  });
 }
 
 function key(sid,item){return sid+'||'+item;}
@@ -328,46 +376,132 @@ function renderSuppliers(){
   SUPPLIERS.forEach(s=>{
     let allItems=[];
     Object.entries(s.groups).forEach(([g,items])=>allItems=allItems.concat(items));
-    const filtered=filter?allItems.filter(i=>i.toLowerCase().includes(filter)):allItems;
-    if(!filtered.length)return;
-    const supQty=allItems.reduce((a,i)=>a+getQ(s.id,i),0);
+    // Filtrar ocultos
+    let visiveis=allItems.filter(i=>!isOculto(s.id,i));
+    // Filtrar favoritos se necessário
+    if(favFiltro==='favoritos') visiveis=visiveis.filter(i=>isFav(s.id,i));
+    // Filtrar busca
+    if(filter) visiveis=visiveis.filter(i=>i.toLowerCase().includes(filter));
+    if(!visiveis.length)return;
+    const supQty=visiveis.reduce((a,i)=>a+getQ(s.id,i),0);
     const isOpen=openSup[s.id];
+    const visSet=new Set(visiveis);
     html+=`<div class="sup-card"><div class="sup-head" onclick="toggleSup('${s.id}')">
       <div class="sup-icon" style="background:${s.color}">${s.emoji}</div>
       <div style="flex:1">
         <div class="sup-name">${s.name}</div>
-        <div class="sup-meta">${allItems.length} itens${supQty>0?` · <strong style="color:${s.tc}">${supQty} no pedido</strong>`:''}</div>
+        <div class="sup-meta">${visiveis.length} itens${supQty>0?` · <strong style="color:${s.tc}">${supQty} no pedido</strong>`:''}</div>
       </div>
       <span class="chev${isOpen?' open':''}">⌄</span>
     </div>`;
     if(isOpen){
       html+='<div class="items">';
+      // Favoritos no topo
+      const favItems=visiveis.filter(i=>isFav(s.id,i));
+      if(favItems.length&&favFiltro!=='favoritos'){
+        html+=`<div class="group-label" style="color:#f59e0b;background:#fffbeb">⭐ Favoritos</div>`;
+        favItems.forEach(item=>{
+          html+=renderItem(s,item);
+        });
+      }
+      // Grupos normais
       Object.entries(s.groups).forEach(([g,items])=>{
-        const show=filter?items.filter(i=>i.toLowerCase().includes(filter)):items;
+        const show=items.filter(i=>visSet.has(i)&&(favFiltro==='favoritos'||!isFav(s.id,i)));
         if(!show.length)return;
         html+=`<div class="group-label">${g}</div>`;
-        show.forEach(item=>{
-          const q=getQ(s.id,item);
-          const esc=item.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-          html+=`<div class="item">
-            <div class="item-name">${item}</div>
-            <div class="qty-ctrl">
-              <button class="qb" onclick="chg('${s.id}','${esc}',-1)">−</button>
-              <div class="qv${q>0?' has':''}" id="qv-${s.id}-${Math.abs(hashStr(item))}">${q}</div>
-              <button class="qb" onclick="chg('${s.id}','${esc}',1)">+</button>
-            </div>
-          </div>`;
-        });
+        show.forEach(item=>{html+=renderItem(s,item);});
       });
       html+='</div>';
     }
     html+='</div>';
   });
-  if(!html)html='<div class="empty">Nenhum item encontrado</div>';
+  if(!html){
+    if(favFiltro==='favoritos')html='<div class="empty">⭐ Nenhum favorito ainda.<br><span style="font-size:12px">Toque na estrela ☆ ao lado de um material para favoritar.</span></div>';
+    else html='<div class="empty">Nenhum item encontrado</div>';
+  }
   c.innerHTML=html;
 }
 
+function renderItem(s,item){
+  const q=getQ(s.id,item);
+  const esc=item.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const fav=isFav(s.id,item);
+  return `<div class="item">
+    <span class="item-fav" onclick="toggleFav('${s.id}','${esc}')" title="${fav?'Remover dos favoritos':'Adicionar aos favoritos'}">${fav?'⭐':'☆'}</span>
+    <div class="item-name">${item}</div>
+    <div class="qty-ctrl">
+      <button class="qb" onclick="chg('${s.id}','${esc}',-1)">−</button>
+      <div class="qv${q>0?' has':''}" id="qv-${s.id}-${Math.abs(hashStr(item))}">${q}</div>
+      <button class="qb" onclick="chg('${s.id}','${esc}',1)">+</button>
+    </div>
+  </div>`;
+}
+
 function hashStr(s){let h=0;for(let i=0;i<s.length;i++)h=Math.imul(31,h)+s.charCodeAt(i)|0;return h;}
+
+window.toggleFav=function(sid,item){
+  const k=sid+'||'+item;
+  if(favoritos[k])delete favoritos[k]; else favoritos[k]=true;
+  salvarFavoritos();
+  renderSuppliers();
+};
+
+window.setFavFiltro=function(f){
+  favFiltro=f;
+  document.getElementById('ff-todos').className='fav-btn'+(f==='todos'?' active':'');
+  document.getElementById('ff-favoritos').className='fav-btn'+(f==='favoritos'?' active':'');
+  renderSuppliers();
+};
+
+window.setPainelSubTab=function(t){
+  document.getElementById('pg-pedidos').style.display=t==='pedidos'?'':'none';
+  document.getElementById('pg-materiais').style.display=t==='materiais'?'':'none';
+  document.getElementById('pst-pedidos').className='painel-sub-tab'+(t==='pedidos'?' active':'');
+  document.getElementById('pst-materiais').className='painel-sub-tab'+(t==='materiais'?' active':'');
+  if(t==='materiais')renderMateriaisGestao();
+};
+
+function renderMateriaisGestao(){
+  const c=document.getElementById('mat-list');
+  let html='';
+  SUPPLIERS.forEach(s=>{
+    let allItems=[];
+    Object.entries(s.groups).forEach(([g,items])=>allItems=allItems.concat(items));
+    const ocultosCont=allItems.filter(i=>isOculto(s.id,i)).length;
+    html+=`<div class="sup-card" style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:#f8f8f8;border-bottom:1px solid #eee">
+        <div class="sup-icon" style="background:${s.color}">${s.emoji}</div>
+        <div style="flex:1"><div class="sup-name">${s.name}</div>
+        <div class="sup-meta">${allItems.length} itens · <span style="color:#C62828">${ocultosCont} ocultos</span></div></div>
+      </div>`;
+    Object.entries(s.groups).forEach(([g,items])=>{
+      html+=`<div class="mat-group-label">${g}</div>`;
+      items.forEach(item=>{
+        const oculto=isOculto(s.id,item);
+        const esc=item.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+        html+=`<div class="mat-item">
+          <span class="mat-name">${item}</span>
+          <button class="mat-toggle ${oculto?'oculto':'ativo'}" onclick="toggleOculto('${s.id}','${esc}')">
+            ${oculto?'👁 Mostrar':'🚫 Ocultar'}
+          </button>
+        </div>`;
+      });
+    });
+    html+='</div>';
+  });
+  c.innerHTML=html;
+}
+
+window.toggleOculto=async function(sid,item){
+  const k=sid+'||'+item;
+  if(ocultos[k])delete ocultos[k]; else ocultos[k]=true;
+  try{
+    await update(ref(db,'ocultos'),{[k]: ocultos[k]||null});
+    showToast(ocultos[k]?'🚫 Material ocultado de todos':'👁 Material visível novamente');
+    renderMateriaisGestao();
+    renderSuppliers();
+  }catch(e){showToast('Erro ao salvar.');}
+};
 
 window.toggleSup=function(id){openSup[id]=!openSup[id];renderSuppliers();};
 
@@ -603,6 +737,7 @@ function showToast(m){
 
 // INIT
 carregarLocal();
+carregarOcultos();
 render();
 </script>
 </body>
