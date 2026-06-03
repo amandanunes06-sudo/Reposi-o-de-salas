@@ -100,6 +100,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .status-andamento{background:#E3F2FD;color:#1565C0}
 .status-atendido{background:#E8F5E9;color:#2E7D32}
 .status-parcial{background:#FFF8E1;color:#F57F17}
+.status-cancelado{background:#FFEBEE;color:#C62828}
+.hist-status.cancelado{background:#FFEBEE;color:#C62828}
 .painel-items{font-size:11px;color:#555;line-height:1.9;border-top:1px solid #f5f5f5;padding-top:10px}
 .painel-sup{font-size:12px;font-weight:700;color:#1a1a1a;margin-top:8px;margin-bottom:2px}
 .painel-email{font-size:11px;color:#888;margin-top:6px}
@@ -192,6 +194,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <button class="filter-btn" onclick="setPainelFiltro('andamento')" id="f-andamento">🔄 Em andamento</button>
       <button class="filter-btn" onclick="setPainelFiltro('parcial')" id="f-parcial">⚠️ Parcial</button>
       <button class="filter-btn" onclick="setPainelFiltro('atendido')" id="f-atendido">✅ Atendidos</button>
+    <button class="filter-btn" onclick="setPainelFiltro('cancelado')" id="f-cancelado">❌ Cancelados</button>
     </div>
     <div class="section" id="painel-list"></div>
   </div>
@@ -606,7 +609,7 @@ function renderHistLocal(){
   c.innerHTML=html;
 }
 
-function labelStatus(s){return s==='pendente'?'⏳ Pendente':s==='andamento'?'🔄 Em andamento':s==='parcial'?'⚠️ Atendido Parcialmente':'✅ Atendido';}
+function labelStatus(s){return s==='pendente'?'⏳ Pendente':s==='andamento'?'🔄 Em andamento':s==='parcial'?'⚠️ Atendido Parcialmente':s==='cancelado'?'❌ Cancelado':'✅ Atendido';}
 
 window.switchTab=function(t){
   document.getElementById('view-p').style.display=t==='pedido'?'':'none';
@@ -668,7 +671,7 @@ function carregarPedidosFirebase(){
 
 window.setPainelFiltro=function(f){
   painelFiltro=f;
-  ['todos','pendente','andamento','parcial','atendido'].forEach(x=>{
+  ['todos','pendente','andamento','parcial','atendido','cancelado'].forEach(x=>{
     document.getElementById('f-'+x).className='filter-btn'+(f===x?' active':'');
   });
   renderPainel();
@@ -682,7 +685,8 @@ function renderPainel(){
   let html='';
   filtrados.forEach(([id,p])=>{
     const st=p.status||'pendente';
-    html+=`<div class="painel-card">
+    const cancelStyle=st==='cancelado'?'opacity:0.6;border-color:#ffcdd2;':'';
+    html+=`<div class="painel-card" style="${cancelStyle}">
       <div class="painel-top">
         <div class="painel-info">
           <h3>📅 ${p.data}</h3>
@@ -693,6 +697,7 @@ function renderPainel(){
           <option value="andamento" ${st==='andamento'?'selected':''}>🔄 Em andamento</option>
           <option value="parcial" ${st==='parcial'?'selected':''}>⚠️ Atend. Parcial</option>
           <option value="atendido" ${st==='atendido'?'selected':''}>✅ Atendido</option>
+          <option value="cancelado" ${st==='cancelado'?'selected':''}>❌ Cancelado</option>
         </select>
       </div>
       <div class="painel-items">`;
@@ -713,11 +718,17 @@ function renderPainel(){
 }
 
 window.mudarStatus=async function(id,novoStatus,sel){
+  if(novoStatus==='cancelado'){
+    if(!confirm('Tem certeza que deseja CANCELAR este pedido? Esta ação ficará registrada no histórico.')){
+      sel.value=sel.dataset.prev||'pendente';
+      return;
+    }
+  }
+  sel.dataset.prev=novoStatus;
   try{
     await update(ref(db,`pedidos/${id}`),{status:novoStatus});
-    // Atualiza cor do select dinamicamente
     sel.className='status-select status-'+novoStatus;
-    showToast('Status atualizado!');
+    showToast(novoStatus==='cancelado'?'❌ Pedido cancelado':'Status atualizado!');
   }catch(e){showToast('Erro ao atualizar.');}
 };
 
