@@ -129,6 +129,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .painel-sub-tab{flex:1;text-align:center;padding:9px 4px;font-size:12px;color:#888;cursor:pointer;border-bottom:2px solid transparent}
 .painel-sub-tab.active{color:#1a1a1a;border-bottom:2px solid #1a73e8;font-weight:600}
 .mat-group-label{font-size:10px;font-weight:700;color:#999;background:#f8f8f8;padding:4px 13px;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid #f0f0f0}
+/* ADICIONAR ITEM */
+.add-item-bar{padding:10px 16px;background:#f0f6ff;border-bottom:1px solid #c5d9f8;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.add-item-bar select,.add-item-bar input{padding:7px 10px;border:1px solid #c5d9f8;border-radius:8px;font-size:12px;background:#fff;color:#1a1a1a;outline:none}
+.add-item-bar select{flex:1;min-width:120px}
+.add-item-bar input{flex:2;min-width:160px}
+.add-item-bar button{padding:7px 14px;background:#1a73e8;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.mat-del{padding:3px 10px;border-radius:20px;border:none;font-size:11px;font-weight:600;cursor:pointer;background:#FFEBEE;color:#C62828;margin-left:4px}
+/* AJUDA */
+.help-screen{position:fixed;inset:0;background:#fff;z-index:200;overflow-y:auto;padding:0 0 40px}
+.help-header{background:#0A2342;padding:16px;position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px}
+.help-header h2{color:#fff;font-size:16px;font-weight:600;flex:1}
+.help-close{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:0 4px}
+.help-section{padding:16px}
+.help-card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.help-card-header{background:#f8f9ff;padding:12px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #eee}
+.help-card-header h3{font-size:13px;font-weight:700;color:#0A2342}
+.help-card-body{padding:12px 14px}
+.help-step{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start}
+.help-step:last-child{margin-bottom:0}
+.help-num{width:22px;height:22px;background:#1a73e8;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+.help-step p{font-size:12px;color:#444;line-height:1.5}
+.help-step p strong{color:#0A2342}
+.help-tip{background:#f0f6ff;border-left:3px solid #1a73e8;border-radius:0 8px 8px 0;padding:10px 12px;margin-top:10px;font-size:12px;color:#444;line-height:1.5}
+.help-fab{position:fixed;bottom:20px;right:20px;background:#0A2342;color:#fff;border:none;border-radius:50%;width:48px;height:48px;font-size:22px;cursor:pointer;z-index:15;box-shadow:0 3px 10px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center}
 </style>
 </head>
 <body>
@@ -200,6 +224,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   </div>
   <!-- SUB: MATERIAIS -->
   <div id="pg-materiais" style="display:none">
+    <div class="add-item-bar">
+      <select id="add-sup" onchange="atualizarGrupos()">
+        <option value="">Fornecedor...</option>
+      </select>
+      <select id="add-grp">
+        <option value="">Grupo...</option>
+      </select>
+      <input type="text" id="add-nome" placeholder="Nome do material...">
+      <button onclick="adicionarItem()">+ Adicionar</button>
+    </div>
     <div class="section" id="mat-list"></div>
   </div>
   <div style="text-align:center;padding:10px">
@@ -234,9 +268,105 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 <div class="toast" id="toast"></div>
 
+<!-- TELA DE AJUDA -->
+<div class="help-screen" id="help-screen" style="display:none">
+  <div class="help-header">
+    <h2>❓ Guia do Sistema</h2>
+    <button class="help-close" onclick="fecharAjuda()">✕</button>
+  </div>
+  <div class="help-section">
+
+    <div class="help-card">
+      <div class="help-card-header"><span style="font-size:18px">🔗</span><h3>Como acessar</h3></div>
+      <div class="help-card-body">
+        <div class="help-step"><div class="help-num">1</div><p>Abra o link <strong>https://amandanunes06-sudo.github.io/Reposi-o-de-salas/</strong> no celular ou computador.</p></div>
+        <div class="help-step"><div class="help-num">2</div><p>Salve nos <strong>favoritos do navegador</strong> para acessar rapidamente sempre que precisar.</p></div>
+        <div class="help-tip">💡 Funciona em qualquer celular, tablet ou computador, sem instalar nada.</div>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-header"><span style="font-size:18px">📋</span><h3>Fazendo um pedido</h3></div>
+      <div class="help-card-body">
+        <div class="help-step"><div class="help-num">1</div><p>Na aba <strong>Novo Pedido</strong>, selecione <strong>Sala 01</strong> ou <strong>Sala 02</strong> no canto superior direito.</p></div>
+        <div class="help-step"><div class="help-num">2</div><p>Toque no nome do <strong>fornecedor</strong> para abrir a lista de materiais.</p></div>
+        <div class="help-step"><div class="help-num">3</div><p>Use os botões <strong>+</strong> e <strong>−</strong> para definir a quantidade de cada item.</p></div>
+        <div class="help-step"><div class="help-num">4</div><p>Use a <strong>barra de busca</strong> para encontrar um material rapidamente pelo nome.</p></div>
+        <div class="help-step"><div class="help-num">5</div><p>Toque em <strong>🛒 Ver Pedido</strong> para revisar tudo antes de enviar.</p></div>
+        <div class="help-step"><div class="help-num">6</div><p>Se quiser, informe seu <strong>e-mail</strong> para receber uma cópia. Depois toque em <strong>✈️ Enviar Pedido</strong>.</p></div>
+        <div class="help-tip">💡 O pedido é salvo automaticamente no painel de gestão assim que você envia.</div>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-header"><span style="font-size:18px">⭐</span><h3>Favoritos</h3></div>
+      <div class="help-card-body">
+        <div class="help-step"><div class="help-num">1</div><p>Toque na <strong>estrela ☆</strong> ao lado de qualquer material para marcá-lo como favorito.</p></div>
+        <div class="help-step"><div class="help-num">2</div><p>Toque em <strong>⭐ Favoritos</strong> na barra de filtro para ver só os materiais que você marcou.</p></div>
+        <div class="help-step"><div class="help-num">3</div><p>Os favoritos ficam salvos no seu celular e aparecem <strong>no topo</strong> da lista de cada fornecedor.</p></div>
+        <div class="help-tip">💡 Ideal para quem sempre pede os mesmos materiais — marque uma vez e economize tempo.</div>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-header"><span style="font-size:18px">📅</span><h3>Meus Pedidos</h3></div>
+      <div class="help-card-body">
+        <div class="help-step"><div class="help-num">1</div><p>Acesse a aba <strong>Meus Pedidos</strong> para ver o histórico dos pedidos feitos neste aparelho.</p></div>
+        <div class="help-step"><div class="help-num">2</div><p>Cada pedido mostra a <strong>data, sala, fornecedores e status atual</strong> (Pendente, Em andamento, Atendido, etc).</p></div>
+        <div class="help-tip">💡 O status é atualizado em tempo real pela equipe de estoque no painel de gestão.</div>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-header"><span style="font-size:18px">⚙️</span><h3>Painel de Gestão (só gestoras)</h3></div>
+      <div class="help-card-body">
+        <div class="help-step"><div class="help-num">1</div><p>Toque na aba <strong>⚙️ Gestão</strong> e faça login com seu e-mail e senha <strong>Hemo@2024</strong>.</p></div>
+        <div class="help-step"><div class="help-num">2</div><p>Na aba <strong>📋 Pedidos</strong> você vê todos os pedidos em tempo real. Use os filtros para ver por status.</p></div>
+        <div class="help-step"><div class="help-num">3</div><p>Mude o <strong>status</strong> de cada pedido: ⏳ Pendente → 🔄 Em andamento → ✅ Atendido (ou ⚠️ Parcial / ❌ Cancelado).</p></div>
+        <div class="help-step"><div class="help-num">4</div><p>Se faltar algum item, escreva na <strong>📝 Observação</strong> e clique em <strong>Salvar observação</strong>.</p></div>
+        <div class="help-tip">💡 O cancelamento pede confirmação antes de ser aplicado e fica registrado no histórico.</div>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-header"><span style="font-size:18px">🗂️</span><h3>Gerenciar Materiais (só gestoras)</h3></div>
+      <div class="help-card-body">
+        <div class="help-step"><div class="help-num">1</div><p>No painel de gestão, toque na aba <strong>🗂️ Materiais</strong>.</p></div>
+        <div class="help-step"><div class="help-num">2</div><p>Para <strong>ocultar</strong> um material, toque em <strong>🚫 Ocultar</strong>. Ele some para todos que fazem pedidos.</p></div>
+        <div class="help-step"><div class="help-num">3</div><p>Para <strong>mostrar</strong> novamente, toque em <strong>👁 Mostrar</strong>. Ele volta imediatamente para todos.</p></div>
+        <div class="help-step"><div class="help-num">4</div><p>Para <strong>adicionar</strong> um novo item, selecione o fornecedor e o grupo, digite o nome e toque em <strong>+ Adicionar</strong>.</p></div>
+        <div class="help-step"><div class="help-num">5</div><p>Para <strong>excluir</strong> um item, toque em <strong>🗑</strong> ao lado do material. O item é removido permanentemente.</p></div>
+        <div class="help-tip">💡 Adicionar e excluir itens afeta todo mundo em tempo real, pois fica salvo no Firebase.</div>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-header"><span style="font-size:18px">👥</span><h3>Usuárias com acesso ao painel</h3></div>
+      <div class="help-card-body">
+        <div class="help-step"><div class="help-num">✉</div><p><strong>amanda@hemoaraucaria.com.br</strong></p></div>
+        <div class="help-step"><div class="help-num">✉</div><p><strong>fabiane@hemoaraucaria.com.br</strong></p></div>
+        <div class="help-step"><div class="help-num">✉</div><p><strong>enfermeira.qualidade@hemoaraucaria.com.br</strong></p></div>
+        <div class="help-step"><div class="help-num">✉</div><p><strong>estoque@hemoaraucaria.com.br</strong></p></div>
+        <div class="help-tip">💡 Senha padrão: <strong>Hemo@2024</strong> — recomendamos trocar após o primeiro acesso.</div>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-header"><span style="font-size:18px">☁️</span><h3>Sobre o sistema</h3></div>
+      <div class="help-card-body">
+        <div class="help-step"><div class="help-num">🔗</div><p>Hospedado gratuitamente no <strong>GitHub Pages</strong> — sem prazo de expiração.</p></div>
+        <div class="help-step"><div class="help-num">☁️</div><p>Dados salvos no <strong>Firebase (Google)</strong> — gratuito, seguro e com backup automático.</p></div>
+        <div class="help-step"><div class="help-num">📱</div><p>Funciona em qualquer navegador — <strong>Chrome, Safari, Firefox</strong> — sem instalação.</p></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<button class="help-fab" onclick="abrirAjuda()" title="Ajuda">❓</button>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getDatabase, ref, push, onValue, update } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+import { getDatabase, ref, push, remove, onValue, update, set } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -331,6 +461,7 @@ groups:{
 
 // Estado
 let quantities={}, openSup={}, histLocal=[], sala='SALA 01', filter='';
+let itensDinamicos={};  // {supId: {grupo: [itens adicionados]}}
 let painelFiltro='todos', todosPedidos={}, usuarioLogado=null;
 let favFiltro='todos';
 let favoritos={};   // chave: sid+'||'+item → true
@@ -348,7 +479,7 @@ function carregarLocal(){
 function isFav(sid,item){return !!favoritos[sid+'||'+item];}
 function isOculto(sid,item){return !!ocultos[sid+'||'+item];}
 
-// Carregar ocultos do Firebase (compartilhado entre todos)
+// Carregar ocultos do Firebase
 function carregarOcultos(){
   onValue(ref(db,'ocultos'),snap=>{
     ocultos={};
@@ -356,6 +487,28 @@ function carregarOcultos(){
     renderSuppliers();
     if(usuarioLogado)renderMateriaisGestao();
   });
+}
+
+// Carregar itens dinâmicos do Firebase
+function carregarItensDinamicos(){
+  onValue(ref(db,'itensDinamicos'),snap=>{
+    itensDinamicos={};
+    if(snap.exists())itensDinamicos=snap.val()||{};
+    renderSuppliers();
+    if(usuarioLogado)renderMateriaisGestao();
+  });
+}
+
+// Retorna todos os itens de um supplier (base + dinâmicos)
+function todosItens(s){
+  let base={};
+  Object.entries(s.groups).forEach(([g,items])=>base[g]=[...items]);
+  const din=itensDinamicos[s.id]||{};
+  Object.entries(din).forEach(([g,items])=>{
+    if(!base[g])base[g]=[];
+    items.forEach(i=>{if(!base[g].includes(i))base[g].push(i);});
+  });
+  return base;
 }
 
 function key(sid,item){return sid+'||'+item;}
@@ -377,8 +530,9 @@ function renderSuppliers(){
   const c=document.getElementById('sup-list');
   let html='';
   SUPPLIERS.forEach(s=>{
+    const grupos=todosItens(s);
     let allItems=[];
-    Object.entries(s.groups).forEach(([g,items])=>allItems=allItems.concat(items));
+    Object.entries(grupos).forEach(([g,items])=>allItems=allItems.concat(items));
     // Filtrar ocultos
     let visiveis=allItems.filter(i=>!isOculto(s.id,i));
     // Filtrar favoritos se necessário
@@ -403,12 +557,10 @@ function renderSuppliers(){
       const favItems=visiveis.filter(i=>isFav(s.id,i));
       if(favItems.length&&favFiltro!=='favoritos'){
         html+=`<div class="group-label" style="color:#f59e0b;background:#fffbeb">⭐ Favoritos</div>`;
-        favItems.forEach(item=>{
-          html+=renderItem(s,item);
-        });
+        favItems.forEach(item=>{ html+=renderItem(s,item); });
       }
-      // Grupos normais
-      Object.entries(s.groups).forEach(([g,items])=>{
+      // Grupos normais (base + dinâmicos)
+      Object.entries(grupos).forEach(([g,items])=>{
         const show=items.filter(i=>visSet.has(i)&&(favFiltro==='favoritos'||!isFav(s.id,i)));
         if(!show.length)return;
         html+=`<div class="group-label">${g}</div>`;
@@ -465,11 +617,17 @@ window.setPainelSubTab=function(t){
 };
 
 function renderMateriaisGestao(){
+  // Popular selects de fornecedor
+  const selSup=document.getElementById('add-sup');
+  if(selSup&&selSup.options.length===1){
+    SUPPLIERS.forEach(s=>{ const o=document.createElement('option');o.value=s.id;o.textContent=s.emoji+' '+s.name;selSup.appendChild(o); });
+  }
   const c=document.getElementById('mat-list');
   let html='';
   SUPPLIERS.forEach(s=>{
+    const grupos=todosItens(s);
     let allItems=[];
-    Object.entries(s.groups).forEach(([g,items])=>allItems=allItems.concat(items));
+    Object.entries(grupos).forEach(([g,items])=>allItems=allItems.concat(items));
     const ocultosCont=allItems.filter(i=>isOculto(s.id,i)).length;
     html+=`<div class="sup-card" style="margin-bottom:10px">
       <div style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:#f8f8f8;border-bottom:1px solid #eee">
@@ -477,16 +635,17 @@ function renderMateriaisGestao(){
         <div style="flex:1"><div class="sup-name">${s.name}</div>
         <div class="sup-meta">${allItems.length} itens · <span style="color:#C62828">${ocultosCont} ocultos</span></div></div>
       </div>`;
-    Object.entries(s.groups).forEach(([g,items])=>{
+    Object.entries(grupos).forEach(([g,items])=>{
       html+=`<div class="mat-group-label">${g}</div>`;
+      const din=((itensDinamicos[s.id]||{})[g]||[]);
       items.forEach(item=>{
         const oculto=isOculto(s.id,item);
-        const esc=item.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+        const esc=item.replace(/\/g,'\\').replace(/'/g,"\'");
+        const isDin=din.includes(item);
         html+=`<div class="mat-item">
-          <span class="mat-name">${item}</span>
-          <button class="mat-toggle ${oculto?'oculto':'ativo'}" onclick="toggleOculto('${s.id}','${esc}')">
-            ${oculto?'👁 Mostrar':'🚫 Ocultar'}
-          </button>
+          <span class="mat-name">${item}${isDin?'<span style="font-size:10px;color:#1a73e8;margin-left:4px;font-weight:600">NOVO</span>':''}</span>
+          <button class="mat-toggle ${oculto?'oculto':'ativo'}" onclick="toggleOculto('${s.id}','${esc}')">${oculto?'👁 Mostrar':'🚫 Ocultar'}</button>
+          ${isDin?`<button class="mat-del" onclick="excluirItem('${s.id}','${g.replace(/'/g,"\'")}','${esc}')">🗑</button>`:''}
         </div>`;
       });
     });
@@ -494,6 +653,51 @@ function renderMateriaisGestao(){
   });
   c.innerHTML=html;
 }
+
+window.atualizarGrupos=function(){
+  const sid=document.getElementById('add-sup').value;
+  const selGrp=document.getElementById('add-grp');
+  selGrp.innerHTML='<option value="">Grupo...</option>';
+  if(!sid)return;
+  const s=SUPPLIERS.find(x=>x.id===sid);
+  if(!s)return;
+  const grupos=todosItens(s);
+  Object.keys(grupos).forEach(g=>{ const o=document.createElement('option');o.value=g;o.textContent=g;selGrp.appendChild(o); });
+};
+
+window.adicionarItem=async function(){
+  const sid=document.getElementById('add-sup').value;
+  const grp=document.getElementById('add-grp').value;
+  const nome=document.getElementById('add-nome').value.trim().toUpperCase();
+  if(!sid||!grp||!nome){showToast('Preencha fornecedor, grupo e nome.');return;}
+  // Verificar duplicado
+  const s=SUPPLIERS.find(x=>x.id===sid);
+  const grupos=todosItens(s);
+  if((grupos[grp]||[]).includes(nome)){showToast('Este item já existe neste grupo.');return;}
+  // Salvar no Firebase
+  const dinAtual=((itensDinamicos[sid]||{})[grp])||[];
+  const novaLista=[...dinAtual,nome];
+  try{
+    await set(ref(db,`itensDinamicos/${sid}/${grp.replace(/[.#$\[\]]/g,'_')}`),novaLista);
+    document.getElementById('add-nome').value='';
+    showToast('✅ Item adicionado para todos!');
+  }catch(e){showToast('Erro ao adicionar item.');}
+};
+
+window.excluirItem=async function(sid,grp,item){
+  if(!confirm(`Excluir permanentemente:\n${item}?`))return;
+  const chaveGrp=grp.replace(/[.#$\[\]]/g,'_');
+  const dinAtual=((itensDinamicos[sid]||{})[chaveGrp])||[];
+  const novaLista=dinAtual.filter(i=>i!==item);
+  try{
+    if(novaLista.length>0){
+      await set(ref(db,`itensDinamicos/${sid}/${chaveGrp}`),novaLista);
+    } else {
+      await remove(ref(db,`itensDinamicos/${sid}/${chaveGrp}`));
+    }
+    showToast('🗑 Item excluído!');
+  }catch(e){showToast('Erro ao excluir.');}
+};
 
 window.toggleOculto=async function(sid,item){
   const k=sid+'||'+item;
@@ -740,6 +944,9 @@ window.salvarObs=async function(id){
   }catch(e){showToast('Erro ao salvar observação.');}
 };
 
+window.abrirAjuda=function(){document.getElementById('help-screen').style.display='block';};
+window.fecharAjuda=function(){document.getElementById('help-screen').style.display='none';};
+
 function showToast(m){
   const t=document.getElementById('toast');
   t.textContent=m;t.classList.add('show');
@@ -749,6 +956,7 @@ function showToast(m){
 // INIT
 carregarLocal();
 carregarOcultos();
+carregarItensDinamicos();
 render();
 </script>
 </body>
