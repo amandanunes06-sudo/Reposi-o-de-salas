@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Reposição de Salas — Hemoaraucária</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#F5F5F5;color:#1a1a1a}
+.app{max-width:480px;margin:0 auto;padding:0 0 90px;min-height:100vh}
+/* HEADER */
+.header{background:#fff;border-bottom:1px solid #e8e8e8;padding:14px 16px;position:sticky;top:0;z-index:10;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.header-row{display:flex;align-items:center;justify-content:space-between}
+.header h1{font-size:16px;font-weight:600;color:#1a1a1a}
+.header p{font-size:11px;color:#888;margin-top:2px}
+.sala-toggle{display:flex;gap:4px;background:#f0f0f0;border-radius:8px;padding:3px}
+.sala-btn{padding:5px 12px;font-size:12px;border-radius:6px;cursor:pointer;border:none;background:none;color:#666;font-weight:500;transition:all .15s}
+.sala-btn.active{background:#fff;color:#1a1a1a;box-shadow:0 1px 3px rgba(0,0,0,.12);font-weight:600}
+/* TABS */
+.tabs{display:flex;background:#fff;border-bottom:1px solid #e8e8e8}
+.tab{flex:1;text-align:center;padding:11px 4px;font-size:13px;color:#888;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.tab.active{color:#1a1a1a;border-bottom:2px solid #1a73e8;font-weight:600}
+/* SEARCH */
+.search-bar{padding:10px 16px 6px;background:#fff;border-bottom:1px solid #e8e8e8}
+.search-bar input{width:100%;padding:9px 13px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;background:#f9f9f9;color:#1a1a1a;outline:none}
+.search-bar input:focus{border-color:#1a73e8;background:#fff}
+/* CARDS */
+.section{padding:10px 16px}
+.sup-card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.sup-head{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+.sup-head:active{background:#f9f9f9}
+.sup-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.sup-name{font-size:13px;font-weight:600;color:#1a1a1a}
+.sup-meta{font-size:11px;color:#888;margin-top:2px}
+.chev{font-size:18px;color:#aaa;transition:transform .2s;margin-left:auto;flex-shrink:0}
+.chev.open{transform:rotate(180deg)}
+.items{border-top:1px solid #f0f0f0}
+.group-label{font-size:10px;font-weight:700;color:#999;background:#f8f8f8;padding:5px 14px;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid #f0f0f0}
+.item{display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid #f5f5f5}
+.item:last-child{border-bottom:none}
+.item-name{flex:1;font-size:12px;color:#222;line-height:1.4}
+.qty-ctrl{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.qb{width:28px;height:28px;border:1px solid #ddd;border-radius:7px;background:#f5f5f5;color:#333;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:500;-webkit-tap-highlight-color:transparent}
+.qb:active{background:#e0e0e0}
+.qv{font-size:14px;font-weight:600;min-width:24px;text-align:center;color:#1a1a1a}
+.qv.has{color:#1a73e8}
+.badge{background:#e8f0fe;color:#1a73e8;font-size:11px;font-weight:600;padding:2px 7px;border-radius:20px;margin-left:4px}
+/* FAB */
+.fab{position:fixed;bottom:20px;right:20px;background:#1a73e8;color:#fff;border:none;border-radius:24px;padding:13px 20px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;z-index:20;box-shadow:0 4px 14px rgba(26,115,232,.4);-webkit-tap-highlight-color:transparent}
+.fab:active{transform:scale(.97)}
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:30;display:flex;align-items:flex-end}
+.modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px 16px 32px}
+.modal-drag{width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 16px}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:3px}
+.modal-sub{font-size:12px;color:#888;margin-bottom:16px}
+.msec{margin-bottom:14px}
+.msec-title{font-size:11px;font-weight:700;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;padding-bottom:4px;border-bottom:1px solid #f0f0f0}
+.mitem{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;color:#333;gap:8px}
+.mitem span:last-child{font-weight:600;flex-shrink:0;color:#1a1a1a}
+.email-section{background:#f0f6ff;border:1px solid #c5d9f8;border-radius:10px;padding:14px;margin:16px 0 8px}
+.email-section label{font-size:12px;font-weight:600;color:#1a73e8;display:block;margin-bottom:6px}
+.email-input{width:100%;padding:9px 12px;border:1px solid #c5d9f8;border-radius:8px;font-size:13px;background:#fff;color:#1a1a1a;outline:none}
+.email-note{font-size:11px;color:#888;margin-top:6px}
+.mactions{display:flex;gap:10px;margin-top:14px}
+.btn-cancel{flex:1;padding:12px;border:1px solid #e0e0e0;border-radius:10px;background:#fff;font-size:14px;cursor:pointer;color:#555;font-weight:500}
+.btn-ok{flex:2;padding:12px;border:none;border-radius:10px;background:#1a73e8;color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+.btn-ok:active{background:#1557b0}
+/* HISTÓRICO */
+.hist-card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;margin-bottom:10px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.hist-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px}
+.hist-date{font-size:13px;font-weight:600;color:#1a1a1a}
+.hist-tags{display:flex;gap:6px;flex-wrap:wrap}
+.hist-sala{font-size:11px;padding:3px 9px;border-radius:20px;background:#e8f0fe;color:#1a73e8;font-weight:600}
+.hist-status{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600;cursor:pointer}
+.hist-status.pendente{background:#FFF3E0;color:#E65100}
+.hist-status.andamento{background:#E3F2FD;color:#1565C0}
+.hist-status.atendido{background:#E8F5E9;color:#2E7D32}
+.hist-status.parcial{background:#FFF8E1;color:#F57F17}
+.hist-items{font-size:11px;color:#666;line-height:1.8}
+.hist-sup{font-size:12px;font-weight:600;color:#1a1a1a;margin-top:7px;margin-bottom:2px}
+/* LOGIN */
+.login-screen{position:fixed;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;z-index:100}
+.login-logo{font-size:48px;margin-bottom:16px}
+.login-title{font-size:22px;font-weight:700;color:#1a1a1a;margin-bottom:4px}
+.login-sub{font-size:13px;color:#888;margin-bottom:32px;text-align:center}
+.login-input{width:100%;padding:13px 16px;border:1px solid #e0e0e0;border-radius:10px;font-size:14px;outline:none;margin-bottom:12px;background:#f9f9f9}
+.login-input:focus{border-color:#1a73e8;background:#fff}
+.login-btn{width:100%;padding:14px;background:#1a73e8;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px}
+.login-btn:active{background:#1557b0}
+.login-err{color:#c62828;font-size:13px;margin-top:8px;text-align:center}
+.login-back{color:#1a73e8;font-size:13px;margin-top:16px;cursor:pointer;text-decoration:underline}
+/* PAINEL */
+.painel-card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;margin-bottom:10px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.painel-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px}
+.painel-info h3{font-size:13px;font-weight:600;color:#1a1a1a}
+.painel-info p{font-size:11px;color:#888;margin-top:2px}
+.status-select{font-size:12px;padding:5px 10px;border-radius:20px;border:none;font-weight:600;cursor:pointer;outline:none}
+.status-pendente{background:#FFF3E0;color:#E65100}
+.status-andamento{background:#E3F2FD;color:#1565C0}
+.status-atendido{background:#E8F5E9;color:#2E7D32}
+.status-parcial{background:#FFF8E1;color:#F57F17}
+.status-cancelado{background:#FFEBEE;color:#C62828}
+.hist-status.cancelado{background:#FFEBEE;color:#C62828}
+.painel-items{font-size:11px;color:#555;line-height:1.9;border-top:1px solid #f5f5f5;padding-top:10px}
+.painel-sup{font-size:12px;font-weight:700;color:#1a1a1a;margin-top:8px;margin-bottom:2px}
+.painel-email{font-size:11px;color:#888;margin-top:6px}
+.filter-bar{display:flex;gap:8px;padding:10px 16px 4px;background:#fff;border-bottom:1px solid #e8e8e8;overflow-x:auto}
+.filter-btn{padding:6px 14px;border-radius:20px;border:1px solid #e0e0e0;background:#fff;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;color:#555}
+.filter-btn.active{background:#1a73e8;color:#fff;border-color:#1a73e8}
+/* TOAST */
+.toast{position:fixed;top:72px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;z-index:50;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.empty{text-align:center;padding:40px 20px;color:#aaa;font-size:14px}
+.spinner{text-align:center;padding:40px;color:#888;font-size:13px}
+/* FAVORITOS E OCULTOS */
+.item-fav{font-size:16px;cursor:pointer;flex-shrink:0;padding:0 4px;line-height:1;user-select:none;-webkit-tap-highlight-color:transparent}
+.fav-filter-bar{display:flex;gap:8px;padding:8px 16px 4px;background:#fff;border-bottom:1px solid #e8e8e8;overflow-x:auto}
+.fav-btn{padding:5px 14px;border-radius:20px;border:1px solid #e0e0e0;background:#fff;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;color:#555;display:flex;align-items:center;gap:4px}
+.fav-btn.active{background:#1a73e8;color:#fff;border-color:#1a73e8}
+/* PAINEL MATERIAIS */
+.mat-item{display:flex;align-items:center;gap:8px;padding:8px 13px;border-bottom:1px solid #f5f5f5;font-size:12px;color:#333}
+.mat-item:last-child{border-bottom:none}
+.mat-name{flex:1}
+.mat-toggle{padding:4px 12px;border-radius:20px;border:none;font-size:11px;font-weight:600;cursor:pointer}
+.mat-toggle.ativo{background:#E8F5E9;color:#2E7D32}
+.mat-toggle.oculto{background:#FFEBEE;color:#C62828}
+.painel-sub-tabs{display:flex;background:#f8f8f8;border-bottom:1px solid #e8e8e8}
+.painel-sub-tab{flex:1;text-align:center;padding:9px 4px;font-size:12px;color:#888;cursor:pointer;border-bottom:2px solid transparent}
+.painel-sub-tab.active{color:#1a1a1a;border-bottom:2px solid #1a73e8;font-weight:600}
+.mat-group-label{font-size:10px;font-weight:700;color:#999;background:#f8f8f8;padding:4px 13px;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid #f0f0f0}
+/* ADICIONAR ITEM */
+.add-item-bar{padding:10px 16px;background:#f0f6ff;border-bottom:1px solid #c5d9f8;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.add-item-bar select,.add-item-bar input{padding:7px 10px;border:1px solid #c5d9f8;border-radius:8px;font-size:12px;background:#fff;color:#1a1a1a;outline:none}
+.add-item-bar select{flex:1;min-width:120px}
+.add-item-bar input{flex:2;min-width:160px}
+.add-item-bar button{padding:7px 14px;background:#1a73e8;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.mat-del{padding:3px 10px;border-radius:20px;border:none;font-size:11px;font-weight:600;cursor:pointer;background:#FFEBEE;color:#C62828;margin-left:4px}
+/* AJUDA */
+.help-screen{position:fixed;inset:0;background:#fff;z-index:200;overflow-y:auto;padding:0 0 40px}
+.help-header{background:#0A2342;padding:16px;position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px}
+.help-header h2{color:#fff;font-size:16px;font-weight:600;flex:1}
+.help-close{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:0 4px}
+.help-section{padding:16px}
+.help-card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.help-card-header{background:#f8f9ff;padding:12px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #eee}
+.help-card-header h3{font-size:13px;font-weight:700;color:#0A2342}
+.help-card-body{padding:12px 14px}
+.help-step{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start}
+.help-step:last-child{margin-bottom:0}
+.help-num{width:22px;height:22px;background:#1a73e8;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+.help-step p{font-size:12px;color:#444;line-height:1.5}
+.help-step p strong{color:#0A2342}
+.help-tip{background:#f0f6ff;border-left:3px solid #1a73e8;border-radius:0 8px 8px 0;padding:10px 12px;margin-top:10px;font-size:12px;color:#444;line-height:1.5}
+.help-fab{position:fixed;bottom:20px;right:20px;background:#0A2342;color:#fff;border:none;border-radius:50%;width:48px;height:48px;font-size:22px;cursor:pointer;z-index:15;box-shadow:0 3px 10px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center}
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAINEL -->
+<div class="login-screen" id="login-screen" style="display:none">
+  <div class="login-logo">🏥</div>
+  <div class="login-title">Painel de Gestão</div>
+  <div class="login-sub">Hemoaraucária — Reposição de Salas</div>
+  <input class="login-input" type="email" id="login-email" placeholder="Seu e-mail" autocomplete="email">
+  <input class="login-input" type="password" id="login-senha" placeholder="Senha" autocomplete="current-password">
+  <button class="login-btn" onclick="fazerLogin()">Entrar no Painel</button>
+  <div class="login-err" id="login-err"></div>
+  <span class="login-back" onclick="voltarPedido()">← Voltar para fazer pedido</span>
+</div>
+
+<!-- APP PRINCIPAL -->
+<div class="app" id="main-app">
+<div class="header">
+  <div class="header-row">
+    <div>
+      <h1>🏥 Reposição de Salas</h1>
+      <p id="hdr-sub">Selecione os materiais e envie o pedido</p>
+    </div>
+    <div class="sala-toggle">
+      <button class="sala-btn active" onclick="setSala('SALA 01')" id="btn-s1">Sala 01</button>
+      <button class="sala-btn" onclick="setSala('SALA 02')" id="btn-s2">Sala 02</button>
+    </div>
+  </div>
+</div>
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('pedido')" id="tab-p">Novo Pedido</div>
+  <div class="tab" onclick="switchTab('hist')" id="tab-h">Meus Pedidos <span class="badge" id="hbadge">0</span></div>
+  <div class="tab" onclick="abrirPainel()" id="tab-g">⚙️ Gestão</div>
+</div>
+
+<!-- PEDIDO -->
+<div id="view-p">
+  <div class="search-bar"><input type="text" placeholder="🔍 Buscar material..." oninput="filterItems(this.value)" id="srch"></div>
+  <div class="fav-filter-bar">
+    <button class="fav-btn active" onclick="setFavFiltro('todos')" id="ff-todos">📋 Todos</button>
+    <button class="fav-btn" onclick="setFavFiltro('favoritos')" id="ff-favoritos">⭐ Favoritos</button>
+  </div>
+  <div class="section" id="sup-list"></div>
+</div>
+
+<!-- HISTÓRICO LOCAL -->
+<div id="view-h" style="display:none">
+  <div class="section" id="hist-list"></div>
+</div>
+
+<!-- PAINEL GESTÃO -->
+<div id="view-g" style="display:none">
+  <div class="painel-sub-tabs">
+    <div class="painel-sub-tab active" onclick="setPainelSubTab('pedidos')" id="pst-pedidos">📋 Pedidos</div>
+    <div class="painel-sub-tab" onclick="setPainelSubTab('materiais')" id="pst-materiais">🗂️ Materiais</div>
+  </div>
+  <!-- SUB: PEDIDOS -->
+  <div id="pg-pedidos">
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="setPainelFiltro('todos')" id="f-todos">Todos</button>
+      <button class="filter-btn" onclick="setPainelFiltro('pendente')" id="f-pendente">⏳ Pendentes</button>
+      <button class="filter-btn" onclick="setPainelFiltro('andamento')" id="f-andamento">🔄 Em andamento</button>
+      <button class="filter-btn" onclick="setPainelFiltro('parcial')" id="f-parcial">⚠️ Parcial</button>
+      <button class="filter-btn" onclick="setPainelFiltro('atendido')" id="f-atendido">✅ Atendidos</button>
+    <button class="filter-btn" onclick="setPainelFiltro('cancelado')" id="f-cancelado">❌ Cancelados</button>
+    </div>
+    <div class="section" id="painel-list"></div>
+  </div>
+  <!-- SUB: MATERIAIS -->
+  <div id="pg-materiais" style="display:none">
+    <div class="add-item-bar">
+      <select id="add-sup" onchange="atualizarGrupos()">
+        <option value="">Fornecedor...</option>
+      </select>
+      <select id="add-grp">
+        <option value="">Grupo...</option>
+      </select>
+      <input type="text" id="add-nome" placeholder="Nome do material...">
+      <button onclick="adicionarItem()">+ Adicionar</button>
+    </div>
+    <div class="section" id="mat-list"></div>
+  </div>
+  <div style="text-align:center;padding:10px">
+    <button onclick="logoutPainel()" style="background:none;border:1px solid #ddd;border-radius:8px;padding:8px 18px;font-size:12px;color:#888;cursor:pointer">Sair do painel</button>
+  </div>
+</div>
+</div>
+
+<!-- FAB -->
+<button class="fab" onclick="openModal()" id="fab" style="display:none">
+  🛒 Ver Pedido &nbsp;<span id="fab-n" style="background:rgba(255,255,255,.3);padding:2px 8px;border-radius:20px;font-size:12px">0</span>
+</button>
+
+<!-- MODAL CONFIRMAÇÃO -->
+<div class="modal-bg" id="modal" style="display:none" onclick="closeBg(event)">
+<div class="modal">
+  <div class="modal-drag"></div>
+  <div class="modal-title">Confirmar Pedido</div>
+  <div class="modal-sub" id="m-sub"></div>
+  <div id="m-content"></div>
+  <div class="email-section">
+    <label>📧 Enviar cópia por e-mail (opcional)</label>
+    <input type="email" class="email-input" id="email-to" placeholder="seuemail@hospital.com.br">
+    <div class="email-note">O pedido será salvo automaticamente no painel de gestão e também enviado por e-mail se informado.</div>
+  </div>
+  <div class="mactions">
+    <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+    <button class="btn-ok" onclick="confirmOrder()">✈️ Enviar Pedido</button>
+  </div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- TELA DE AJUDA -->
+<div class="help-screen" id="help-screen" style="display:none">
+  <div class="help-header">
+    <h2>❓ Guia do Sistema</h2>
+    <button class="help-close" onclick="fecharAjuda()">✕</button>
+  </div>
+  <div class="help-section">
+
+    <div class="help-card">
+      <div class="help-card-header"><span style="font-size:18px">🔗</span><h3>Como acessar</h3></div>
+      <div class="help-card-body">
+        <div class="help-step"><div class="help-num">1</div><p>Abra o link <strong>https://amandanunes06-sudo.github.io/Reposi-o-de-salas/</strong> no celular ou computador.</p></div>
+        <div class="help-step"><div class="help-num">2</div><p>Salve nos <strong>favoritos do navegador</strong> para acessar rapidamente sempre que precisar.</p></div>
+        <div class="help-tip">💡 Funciona em qualquer celular, tablet ou computador, sem instalar nada.</div>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-header"><span style="font-size:18px">📋</span><h3>Fazendo um pedido</h3></div>
+      <div class="help-card-body">
+        <div class="help-step"><div class="help-num">1</div><p>Na aba <strong>Novo Pedido</strong>, selecione <strong>Sala 01</strong> ou <strong>Sala 02</strong> no canto superior direito.</p></div>
+        <div class="help-step"><div class="help-num">2</div><p>Toque no nome do <strong>fornecedor</strong> para abrir a lista de materiais.</p></div>
+        <div class="help-step"><div class="help-num">3</div><p>Use os botões <strong>+</strong> e <strong>−</strong> para definir a quantidade de cada item.</p></div>
+        <div class="help-step"><div class="help-num">4</div><p>Use a <strong>barra de busca</strong> para encontrar um material rapidamente pelo nome.</p></div>
+        <div class="help-step"><div class="help-num">5</div><p>Toque em <strong>🛒 Ver Pedido</strong> para revisar tudo antes de enviar.</p></div>
+        <div class="help-step"><div class="help-num">6</div><p>Se quiser, informe seu <strong>e-mail</strong> para receber uma cópia. Depois toque em <strong>✈️ Enviar Pedido</strong>.</p></div>
+        <div class="help-tip">💡 O pedido é salvo automaticamente no painel de gestão assim que você envia.</div>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-header"><span style="font-size:18px">⭐</span><h3>Favoritos</h3></div>
+      <div class="help-card-body">
+        <div class="help-step"><div class="help-num">1</div><p>Toque na <strong>estrela ☆</strong> ao lado de qualquer material para marcá-lo como favorito.</p></div>
+        <div class="help-step"><div class="help-num">2</div><p>Toque em <strong>⭐ Favoritos</strong> na barra de filtro para ver só os materiais que você marcou.</p></div>
+        <div class="help-step"><div class="help-num">3</div><p>Os favoritos ficam salvos no seu celular e aparecem <strong>no topo</strong> da lista de cada fornecedor.</p></div>
+        <div class="help-tip">💡 Ideal para quem sempre pede os mesmos materiais — marque uma vez e economize tempo.</div>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-header"><span style="font-size:18px">📅</span><h3>Meus Pedidos</h3></div>
+      <div class="help-card-body">
+        <div class="help-step"><div class="help-num">1</div><p>Acesse a aba <strong>Meus Pedidos</strong> para ver o histórico dos pedidos feitos neste aparelho.</p></div>
+        <div class="help-step"><div class="help-num">2</div><p>Cada pedido mostra a <strong>data, sala, fornecedores e status atual</strong> (Pendente, Em andamento, Atendido, etc).</p></div>
+        <div class="help-tip">💡 O status é atualizado em tempo real pela equipe de estoque no painel de gestão.</div>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-header"><span style="font-size:18px">⚙️</span><h3>Painel de Gestão (só gestoras)</h3></div>
+      <div class="help-card-body">
+        <div class="help-step"><div class="help-num">1</div><p>Toque na aba <strong>⚙️ Gestão</strong> e faça login com seu e-mail e senha <strong>Hemo@2024</strong>.</p></div>
+        <div class="help-step"><div class="help-num">2</div><p>Na aba <strong>📋 Pedidos</strong> você vê todos os pedidos em tempo real. Use os filtros para ver por status.</p></div>
+        <div class="help-step"><div class="help-num">3</div><p>Mude o <strong>status</strong> de cada pedido: ⏳ Pendente → 🔄 Em andamento → ✅ Atendido (ou ⚠️ Parcial / ❌ Cancelado).</p></div>
+        <div class="help-step"><div class="help-num">4</div><p>Se faltar algum item, escreva na <strong>📝 Observação</strong> e clique em <strong>Salvar observação</strong>.</p></div>
+        <div class="help-tip">💡 O cancelamento pede confirmação antes de ser aplicado e fica registrado no histórico.</div>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-header"><span style="font-size:18px">🗂️</span><h3>Gerenciar Materiais (só gestoras)</h3></div>
+      <div class="help-card-body">
+        <div class="help-step"><div class="help-num">1</div><p>No painel de gestão, toque na aba <strong>🗂️ Materiais</strong>.</p></div>
+        <div class="help-step"><div class="help-num">2</div><p>Para <strong>ocultar</strong> um material, toque em <strong>🚫 Ocultar</strong>. Ele some para todos que fazem pedidos.</p></div>
+        <div class="help-step"><div class="help-num">3</div><p>Para <strong>mostrar</strong> novamente, toque em <strong>👁 Mostrar</strong>. Ele volta imediatamente para todos.</p></div>
+        <div class="help-step"><div class="help-num">4</div><p>Para <strong>adicionar</strong> um novo item, selecione o fornecedor e o grupo, digite o nome e toque em <strong>+ Adicionar</strong>.</p></div>
+        <div class="help-step"><div class="help-num">5</div><p>Para <strong>excluir</strong> um item, toque em <strong>🗑</strong> ao lado do material. O item é removido permanentemente.</p></div>
+        <div class="help-tip">💡 Adicionar e excluir itens afeta todo mundo em tempo real, pois fica salvo no Firebase.</div>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-header"><span style="font-size:18px">👥</span><h3>Usuárias com acesso ao painel</h3></div>
+      <div class="help-card-body">
+        <div class="help-step"><div class="help-num">✉</div><p><strong>amanda@hemoaraucaria.com.br</strong></p></div>
+        <div class="help-step"><div class="help-num">✉</div><p><strong>fabiane@hemoaraucaria.com.br</strong></p></div>
+        <div class="help-step"><div class="help-num">✉</div><p><strong>enfermeira.qualidade@hemoaraucaria.com.br</strong></p></div>
+        <div class="help-step"><div class="help-num">✉</div><p><strong>estoque@hemoaraucaria.com.br</strong></p></div>
+        <div class="help-tip">💡 Senha padrão: <strong>Hemo@2024</strong> — recomendamos trocar após o primeiro acesso.</div>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-header"><span style="font-size:18px">☁️</span><h3>Sobre o sistema</h3></div>
+      <div class="help-card-body">
+        <div class="help-step"><div class="help-num">🔗</div><p>Hospedado gratuitamente no <strong>GitHub Pages</strong> — sem prazo de expiração.</p></div>
+        <div class="help-step"><div class="help-num">☁️</div><p>Dados salvos no <strong>Firebase (Google)</strong> — gratuito, seguro e com backup automático.</p></div>
+        <div class="help-step"><div class="help-num">📱</div><p>Funciona em qualquer navegador — <strong>Chrome, Safari, Firefox</strong> — sem instalação.</p></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<button class="help-fab" onclick="abrirAjuda()" title="Ajuda">❓</button>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getDatabase, ref, push, remove, onValue, update, set } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBxcRUFnDjLHmK8MBWE1zuPORLVJSe8rR0",
+  authDomain: "hemo-reposicao.firebaseapp.com",
+  databaseURL: "https://hemo-reposicao-default-rtdb.firebaseio.com",
+  projectId: "hemo-reposicao",
+  storageBucket: "hemo-reposicao.firebasestorage.app",
+  messagingSenderId: "228226768833",
+  appId: "1:228226768833:web:18be92e682e11ed1d99940"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth(app);
+
+const SUPPLIERS=[
+{id:'alpha',name:'ALPHA (Boston Scientific)',color:'#EBF3FF',tc:'#1a73e8',emoji:'🔬',
+groups:{
+'Agulhas de Punção':['AGULHA DE PUNCAO 18G','AGULHA DE PUNCAO 21G','AGULHA DE PUNCAO 18G X 7CM SUNMED','AGULHA DE PUNCAO 21G X 4CM SUNMED'],
+'Rotablator / RotaPro':['KIT SISTEMA ANGIOP.ROTABLATOR+CAT. ROTALINK 1.25MM PLUS','KIT SISTEMA ANGIOP.ROTABLATOR+CAT. ROTALINK 1.50MM PLUS','KIT SISTEMA ANGIOP.ROTABLATOR+CAT. ROTALINK 1.75MM PLUS','KIT SISTEMA ANGIOP.ROTABLATOR+CAT. ROTALINK 2.00MM PLUS','ROTAWIRE FIO GUIA P/ ROTABLATOR .009 330CM EXTRA SUPPORT','ROTAWIRE FIO GUIA P/ ROTABLATOR .009 330CM - FLOPPY','KIT SISTEMA ANGIOP.ROTABLATOR+CAT. ROTAPRO 1.25MM','KIT SISTEMA ANGIOP.ROTABLATOR+CAT. ROTAPRO 1.50MM','KIT SISTEMA ANGIOP.ROTABLATOR+CAT. ROTAPRO 1.75MM','KIT SISTEMA ANGIOP.ROTABLATOR+CAT. ROTAPRO 2.00MM'],
+'Cateteres Diagnósticos 4F':['PERFORMA CATETER ANGIOGRAFICO .038 X 100CM AL2 4F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM JL3.5 4F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM JL4.0 4F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM JR3.5 4F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM JR4.0 4F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM BERN1 4F','PERFORMA CATETER ANGIOGRAFICO .038 X 65CM CB1 SH 4F','PERFORMA CATETER ANGIOGRAFICO .038 X 65CM CB2 SH 4F','PERFORMA CATETER ANGIOGRAFICO .038 X 65CM CB3 4F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM HH1 4F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM IM 4F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM MP-A1 4F','PERFORMA CATETER ANGIOG .038 X 110CM C P STR 5SH PIG 4F','PERFORMA CATETER ANGIOG .038 X 80CM PIG 4F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM SIM1 4F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM SIM2 4F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM VERT 4F'],
+'Cateteres Diagnósticos 5F':['PERFORMA CATETER ANGIOGRAFICO .038 X 100CM AL1 5F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM AL2 5F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM AL3 5F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM JL3.5 5F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM JL4.0 5F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM JL4.5 5F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM JR3.5 5F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM JR4.0 5F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM JR5.0 5F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM MP-A1 5F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM MP-A2 5F','PERFORMA CATETER ANGIOGRAFICO .038 X 110CM C-PIG 5SH 5F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM SIM1 5F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM VERT 5F'],
+'Cateteres Diagnósticos 6F':['PERFORMA CATETER ANGIOGRAFICO .038 X 100CM AL1 6F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM AL2 6F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM JL3.5 6F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM JL4.0 6F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM JL4.5 6F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM JR3.5 6F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM JR4.0 6F','PERFORMA CATETER ANGIOGRAFICO .038 X 100CM MP-A1 6F','PERFORMA CATETER ANGIOGRAFICO .038 X 110CM C-PIG 5SH 6F'],
+'Balão Farmacológico VESSELIN':['VESSELIN CATETER BALÃO FARMACOLÓGICO 2.0X16MM','VESSELIN CATETER BALÃO FARMACOLÓGICO 2.0X20MM','VESSELIN CATETER BALÃO FARMACOLÓGICO 2.0X24MM','VESSELIN CATETER BALÃO FARMACOLÓGICO 2.0X31MM','VESSELIN CATETER BALÃO FARMACOLÓGICO 2.5X16MM','VESSELIN CATETER BALÃO FARMACOLÓGICO 2.5X20MM','VESSELIN CATETER BALÃO FARMACOLÓGICO 2.5X31MM','VESSELIN CATETER BALÃO FARMACOLÓGICO 3.0X16MM','VESSELIN CATETER BALÃO FARMACOLÓGICO 3.0X20MM','VESSELIN CATETER BALÃO FARMACOLÓGICO 3.0X24MM','VESSELIN CATETER BALÃO FARMACOLÓGICO 3.0X31MM','VESSELIN CATETER BALÃO FARMACOLÓGICO 3.5X16MM','VESSELIN CATETER BALÃO FARMACOLÓGICO 3.5X20MM','VESSELIN CATETER BALÃO FARMACOLÓGICO 3.5X24MM','VESSELIN CATETER BALÃO FARMACOLÓGICO 3.5X31MM','VESSELIN CATETER BALÃO FARMACOLÓGICO 4.0X20MM'],
+'Wolverine Cutting Balloon':['WOLVERINE CUTTING BALLOON 2.00X10MM','WOLVERINE CUTTING BALLOON 2.00X15MM','WOLVERINE CUTTING BALLOON 2.50X10MM','WOLVERINE CUTTING BALLOON 2.50X15MM','WOLVERINE CUTTING BALLOON 3.00X06MM','WOLVERINE CUTTING BALLOON 3.00X10MM','WOLVERINE CUTTING BALLOON 3.00X15MM','WOLVERINE CUTTING BALLOON 3.50X10MM','WOLVERINE CUTTING BALLOON 3.50X15MM','WOLVERINE CUTTING BALLOON 4.00X10MM','WOLVERINE CUTTING BALLOON 4.00X15MM'],
+'Cateteres Guia RUNWAY':['RUNWAY CATETER GUIA 6F 100CM FL3','RUNWAY CATETER GUIA 6F 100CM FL3.5','RUNWAY CATETER GUIA 6F 100CM FL4','RUNWAY CATETER GUIA 6F 100CM FR3.5','RUNWAY CATETER GUIA 6F 100CM FR4','RUNWAY CATETER GUIA 6F 100CM JR3.5','RUNWAY CATETER GUIA 6F 100CM VL3.5','RUNWAY CATETER GUIA 6F 100CM VL4','RUNWAY CATETER GUIA 6F 100CM AL1','RUNWAY CATETER GUIA 6F 100CM AL2','RUNWAY CATETER GUIA 6F 100CM AR1','RUNWAY CATETER GUIA 6F 100CM AR2','RUNWAY CATETER GUIA 6F 100CM IM','RUNWAY CATETER GUIA 6F 100CM LCB','RUNWAY CATETER GUIA 6F 100CM RADIAL'],
+'Cateteres Guia MARCH':['MARCH CATETER GUIA 5F 100CM XB 3.5','MARCH CATETER GUIA 6F 100CM XB 3.5','MARCH CATETER GUIA 6F 100CM JL 3.5','MARCH CATETER GUIA 6F 100CM JL 4.0','MARCH CATETER GUIA 6F 100CM JR 3.5','MARCH CATETER GUIA 6F 100CM JR 4.0','MARCH CATETER GUIA 6F 100CM AL1','MARCH CATETER GUIA 6F 100CM XB 4.0'],
+'Fios Guia Coronários':['CHOICE PLUS FIO GUIA .014 182CM FLOPPY','CHOICE PLUS FIO GUIA .014 182CM EXTRA SUPPORT','CHOICE PLUS FIO GUIA .014 300CM EXTRA SUPPORT','CHOICE PLUS FIO GUIA .014 300CM FLOPPY','PT2 FIO GUIA HIDROFÍLICO .014 185CM LS','PT2 FIO GUIA HIDROFÍLICO .014 185CM MS','PT2 FIO GUIA HIDROFÍLICO .014 300CM MS','ANYREACHP FIO GUIA .014 190CM EXTRA FLOPPY 0.6','ANYREACHP FIO GUIA .014 190CM EXTRA FLOPPY 1.0'],
+'Fios Guia Troca .035':['LAUREATE GUIA .035 150CM RETA HIDROF','LAUREATE GUIA .035 150CM ANGULADA HIDROF','LAUREATE GUIA .035 260CM ANGULADA EXCHANGE','SPLASHWIRE .035 150CM NITINOL ANGULADA','SPLASHWIRE .035 150CM NITINOL RETA','SPLASHWIRE .035 260CM NITINOL ANGULADA','ZIPWIRE .035 150CM ANGULADA','ZIPWIRE .035 260CM ANGULADA','SUNMED GUIA .035 150CM J PTFE','SUNMED GUIA .035 260CM J PTFE','SUNMED GUIA .035 150CM RETA PTFE','INQWIRE .035 150CM J PTFE','INQWIRE .035 260CM J PTFE'],
+'Introdutores':['PRELUDE INTRODUTOR .018 5F 11CM RADIAL','PRELUDE INTRODUTOR .018 6F 11CM RADIAL','PRELUDE INTRODUTOR .035 5F 11CM FEMORAL','PRELUDE INTRODUTOR .035 6F 11CM FEMORAL','PRELUDE INTRODUTOR .035 7F 11CM FEMORAL','PRELUDE INTRODUTOR .035 8F 11CM FEMORAL','INTRODUTOR 5F 11CM FEMORAL SHUNMEI','INTRODUTOR 6F 11CM FEMORAL SHUNMEI','INTRODUTOR 7F 11CM FEMORAL SHUNMEI','INTRODUTOR 8F 11CM FEMORAL SHUNMEI','MEDIKIT S-SHEATH INTRODUTOR 5.0F 11CM','MEDIKIT S-SHEATH INTRODUTOR 6.0F 11CM','MEDIKIT S-SHEATH INTRODUTOR 7.0F 11CM','MEDIKIT S-SHEATH INTRODUTOR 8.0F 11CM'],
+'Stents SYNERGY XD':['SYNERGY XD MONORAIL 2,25X8MM','SYNERGY XD MONORAIL 2,25X12MM','SYNERGY XD MONORAIL 2,25X16MM','SYNERGY XD MONORAIL 2,25X20MM','SYNERGY XD MONORAIL 2,25X24MM','SYNERGY XD MONORAIL 2,25X28MM','SYNERGY XD MONORAIL 2,25X32MM','SYNERGY XD MONORAIL 2,25X38MM','SYNERGY XD MONORAIL 2,5X8MM','SYNERGY XD MONORAIL 2,5X12MM','SYNERGY XD MONORAIL 2,5X16MM','SYNERGY XD MONORAIL 2,5X20MM','SYNERGY XD MONORAIL 2,5X24MM','SYNERGY XD MONORAIL 2,5X28MM','SYNERGY XD MONORAIL 2,5X32MM','SYNERGY XD MONORAIL 2,5X38MM','SYNERGY XD MONORAIL 2,5X48MM','SYNERGY XD MONORAIL 2,75X8MM','SYNERGY XD MONORAIL 2,75X12MM','SYNERGY XD MONORAIL 2,75X16MM','SYNERGY XD MONORAIL 2,75X20MM','SYNERGY XD MONORAIL 2,75X24MM','SYNERGY XD MONORAIL 2,75X28MM','SYNERGY XD MONORAIL 2,75X32MM','SYNERGY XD MONORAIL 2,75X38MM','SYNERGY XD MONORAIL 2,75X48MM','SYNERGY XD MONORAIL 3X8MM','SYNERGY XD MONORAIL 3X12MM','SYNERGY XD MONORAIL 3X16MM','SYNERGY XD MONORAIL 3X20MM','SYNERGY XD MONORAIL 3X24MM','SYNERGY XD MONORAIL 3X28MM','SYNERGY XD MONORAIL 3X32MM','SYNERGY XD MONORAIL 3X38MM','SYNERGY XD MONORAIL 3X48MM','SYNERGY XD MONORAIL 3,5X8MM','SYNERGY XD MONORAIL 3,5X12MM','SYNERGY XD MONORAIL 3,5X16MM','SYNERGY XD MONORAIL 3,5X20MM','SYNERGY XD MONORAIL 3,5X24MM','SYNERGY XD MONORAIL 3,5X28MM','SYNERGY XD MONORAIL 3,5X32MM','SYNERGY XD MONORAIL 3,5X38MM','SYNERGY XD MONORAIL 3,5X48MM','SYNERGY XD MONORAIL 4X8MM','SYNERGY XD MONORAIL 4X12MM','SYNERGY XD MONORAIL 4X16MM','SYNERGY XD MONORAIL 4X20MM','SYNERGY XD MONORAIL 4X24MM','SYNERGY XD MONORAIL 4X28MM','SYNERGY XD MONORAIL 4X32MM','SYNERGY XD MONORAIL 4X38MM','SYNERGY XD MONORAIL 4X48MM','SYNERGY XD MONORAIL 4,5X12MM','SYNERGY XD MONORAIL 4,5X16MM','SYNERGY XD MONORAIL 4,5X20MM','SYNERGY XD MONORAIL 4,5X24MM','SYNERGY XD MONORAIL 4,5X28MM','SYNERGY XD MONORAIL 4,5X32MM','SYNERGY XD MONORAIL 5X12MM','SYNERGY XD MONORAIL 5X16MM','SYNERGY XD MONORAIL 5X20MM','SYNERGY XD MONORAIL 5X24MM','SYNERGY XD MONORAIL 5X28MM','SYNERGY XD MONORAIL 5X32MM'],
+'Microcateteres':['MICROCATETER MAMBA 135CM','MICROCATETER MAMBA FLEX 135CM','MICROCATETER MAMBA FLEX 150CM','ELONG MICRO CATETER 1.9 130CM','MICRO CATETER SWIFT NINJA 2.9F-2.4FX125CM','GUIDEZILLA CATETER GUIA DE EXTENSÃO II 6F','GUIDEZILLA CATETER GUIA DE EXTENSÃO II LONG 6F'],
+'Balão Periférico MUSTANG':['MUSTANG 3.0X20MM 135CM','MUSTANG 3.0X60MM 135CM','MUSTANG 3.0X80MM 135CM','MUSTANG 3.0X100MM 135CM','MUSTANG 3.0X120MM 135CM','MUSTANG 3.0X180MM 135CM','MUSTANG 4.0X40MM 135CM','MUSTANG 4.0X60MM 135CM','MUSTANG 4.0X80MM 135CM','MUSTANG 4.0X100MM 135CM','MUSTANG 4.0X120MM 135CM','MUSTANG 4.0X180MM 135CM','MUSTANG 4.0X200MM 135CM','MUSTANG 5.0X40MM 135CM','MUSTANG 5.0X60MM 135CM','MUSTANG 5.0X80MM 135CM','MUSTANG 5.0X100MM 135CM','MUSTANG 5.0X120MM 135CM','MUSTANG 5.0X150MM 135CM','MUSTANG 5.0X180MM 135CM','MUSTANG 5.0X200MM 135CM','MUSTANG 6.0X20MM 75CM','MUSTANG 6.0X40MM 135CM','MUSTANG 6.0X60MM 135CM','MUSTANG 6.0X80MM 135CM','MUSTANG 6.0X100MM 135CM','MUSTANG 6.0X120MM 135CM','MUSTANG 6.0X150MM 135CM','MUSTANG 6.0X180MM 135CM','MUSTANG 6.0X200MM 135CM','MUSTANG 7.0X20MM 75CM','MUSTANG 7.0X20MM 135CM','MUSTANG 7.0X40MM 135CM','MUSTANG 7.0X60MM 135CM','MUSTANG 7.0X80MM 135CM','MUSTANG 7.0X100MM 135CM','MUSTANG 7.0X120MM 135CM','MUSTANG 7.0X150MM 135CM','MUSTANG 7.0X180MM 135CM','MUSTANG 7.0X200MM 135CM','MUSTANG 8.0X20MM 75CM','MUSTANG 8.0X20MM 135CM','MUSTANG 8.0X40MM 135CM','MUSTANG 8.0X60MM 135CM','MUSTANG 8.0X80MM 135CM','MUSTANG 8.0X100MM 135CM','MUSTANG 8.0X120MM 135CM','MUSTANG 8.0X150MM 135CM','MUSTANG 8.0X180MM 135CM','MUSTANG 8.0X200MM 135CM','MUSTANG 9.0X20MM 135CM','MUSTANG 9.0X40MM 75CM','MUSTANG 9.0X40MM 135CM','MUSTANG 9.0X60MM 135CM','MUSTANG 9.0X80MM 135CM','MUSTANG 10.0X20MM 75CM','MUSTANG 10.0X20MM 135CM','MUSTANG 10.0X40MM 75CM','MUSTANG 10.0X40MM 135CM','MUSTANG 10.0X60MM 135CM','MUSTANG 10.0X80MM 135CM','MUSTANG 12.0X40MM 135CM','MUSTANG 12.0X60MM 135CM','MUSTANG 12.0X80MM 135CM'],
+'Watchman / Outros':['WATCHMAN 12F 20MM FLX','WATCHMAN 12F 24MM FLX','WATCHMAN 12F 27MM FLX','WATCHMAN 12F 31MM FLX','WATCHMAN 12F 35MM FLX','KIT INSUFLADOR ANGIOPOWER','MANIFOLD 503HF-R','TRANSDUTOR PRESSAO']
+}},
+{id:'luminal',name:'LUMINAL',color:'#EDFAF4',tc:'#0F6E56',emoji:'🩺',
+groups:{
+'Balão EUPHORA Não Complacente':['EUPHORA NAO COMPLACENTE 2.50X06','EUPHORA NAO COMPLACENTE 2.50X12','EUPHORA NAO COMPLACENTE 2.75X12','EUPHORA NAO COMPLACENTE 3.00X12','EUPHORA NAO COMPLACENTE 3.00X15','EUPHORA NAO COMPLACENTE 3.50X12','EUPHORA NAO COMPLACENTE 3.50X15','EUPHORA NAO COMPLACENTE 4.00X08','EUPHORA NAO COMPLACENTE 4.00X12','EUPHORA NAO COMPLACENTE 4.50X08','EUPHORA NAO COMPLACENTE 5.00X08'],
+'Balão EUPHORA Semi-Complacente':['EUPHORA SEMI COMPLACENTE 1.50X06','EUPHORA SEMI COMPLACENTE 2.00X12','EUPHORA SEMI COMPLACENTE 2.00X15','EUPHORA SEMI COMPLACENTE 2.50X15','EUPHORA SEMI COMPLACENTE 2.50X20','EUPHORA SEMI COMPLACENTE 3.00X15','EUPHORA SEMI COMPLACENTE 3.50X30','EUPHORA SEMI COMPLACENTE 4.00X12'],
+'Cateteres Diagnósticos INFINITI':['INFINITI 5F 100CM JL 3.5','INFINITI 5F 100CM JL 4.0','INFINITI 5F 100CM JR 3.5','INFINITI 5F 100CM JR 4.0','INFINITI 5F 100CM PIG','INFINITI 5F 100CM IM','INFINITI 6F 100CM JL 3.5','INFINITI 6F 100CM JL 4.0','INFINITI 6F 100CM JR 3.5','INFINITI 6F 100CM JR 4.0','INFINITI 6F 100CM PIG SH','INFINITI 6F 100CM IM'],
+'Cateteres Guia LAUNCHER':['LAUNCHER 5F 100CM JL 3.5','LAUNCHER 5F 100CM JL 4.0','LAUNCHER 6F 100CM JL 3.5','LAUNCHER 6F 100CM JL 4.0','LAUNCHER 6F 100CM JR 3.5','LAUNCHER 6F 100CM JR 4.0','LAUNCHER 6F 100CM EBU 3.5','LAUNCHER 6F 100CM EBU 4.0','LAUNCHER 6F 100CM AL 1.0','LAUNCHER 6F 100CM AL 2.0','LAUNCHER 6F 100CM IMA','LAUNCHER 7F 100CM JL 5.0','LAUNCHER 7F 100CM JR 3.5'],
+'Fios Guia ASAHI':['ASAHI FIELDER XTA 190CM','ASAHI FIELDER XTR 300CM','ASAHI GAIA NEXT1 190CM','ASAHI GAIA NEXT2 190CM','ASAHI GAIA NEXT3 190CM','ASAHI GRAND SLAM 180CM','ASAHI GRAND SLAM 300CM','ASAHI MIRACLE 3 180CM','ASAHI MIRACLE 6 180CM','ASAHI MIRACLE 12 180CM','ASAHI SION BLACK 190CM','ASAHI SION BLUE 190CM','ASAHI SION BLUE J 190CM'],
+'Fios Guia Diagnósticos CORDIS':['EMERALD 0.35 150CM J3','EMERALD 0.35 260CM J3','EMERALD 0.35 150CM CF RT','AQUATRACK 0.35 150CM','AQUATRACK 0.35 260CM','STABILIZER BL 0.14 180CM','STABILIZER PL 0.14 180CM','STABILIZER XS 0.14 180CM','ATW 0.14 195CM J FLOPPY'],
+'Introdutores AVANTI PLUS':['AVANTI PLUS FEMORAL 5F 11CM','AVANTI PLUS FEMORAL 6F 11CM','AVANTI PLUS FEMORAL 7F 11CM','AVANTI PLUS FEMORAL 8F 11CM','AVANTI PLUS FEMORAL 9F 11CM','AVANTI PLUS FEMORAL 10F 11CM','SW RADIAL 5F 10CM','SW RADIAL 6F 10CM','AVANTI PLUS TRANSRADIAL 5F 11CM','AVANTI PLUS TRANSRADIAL 6F 11CM'],
+'Microcateteres ASAHI':['CARAVEL 2.6F 135CM RT','CARAVEL 2.6F 150CM RT','CORSAIR PRO 2.6F 135CM','CORSAIR PRO 2.6F 150CM'],
+'Stents ONYX TRUCOR':['ONYX TRUCOR 2.25X12','ONYX TRUCOR 2.25X15','ONYX TRUCOR 2.25X18','ONYX TRUCOR 2.25X22','ONYX TRUCOR 2.25X30','ONYX TRUCOR 2.25X34','ONYX TRUCOR 2.50X12','ONYX TRUCOR 2.50X15','ONYX TRUCOR 2.50X18','ONYX TRUCOR 2.50X22','ONYX TRUCOR 2.50X26','ONYX TRUCOR 2.50X30','ONYX TRUCOR 2.50X34','ONYX TRUCOR 2.75X12','ONYX TRUCOR 2.75X15','ONYX TRUCOR 2.75X18','ONYX TRUCOR 2.75X22','ONYX TRUCOR 3.00X12','ONYX TRUCOR 3.00X15','ONYX TRUCOR 3.00X18','ONYX TRUCOR 3.00X26','ONYX TRUCOR 3.00X30','ONYX TRUCOR 3.00X34','ONYX TRUCOR 3.00X38','ONYX TRUCOR 3.50X12','ONYX TRUCOR 3.50X15','ONYX TRUCOR 3.50X18','ONYX TRUCOR 3.50X22','ONYX TRUCOR 3.50X26','ONYX TRUCOR 3.50X30','ONYX TRUCOR 3.50X34','ONYX TRUCOR 3.50X38','ONYX TRUCOR 4.00X15','ONYX TRUCOR 4.00X18','ONYX TRUCOR 4.00X26','ONYX TRUCOR 4.00X38'],
+'Stents RESOLUTE ONYX':['RESOLUTE ONYX 4.50X12','RESOLUTE ONYX 4.50X15','RESOLUTE ONYX 4.50X18','RESOLUTE ONYX 4.50X22','RESOLUTE ONYX 4.50X26','RESOLUTE ONYX 5.00X12','RESOLUTE ONYX 5.00X15','RESOLUTE ONYX 5.00X18','RESOLUTE ONYX 5.00X22'],
+'Outros LUMINAL':['CATETER ASPIRACAO ADVANCE EXPORT 6F','CATETER EXTENSAO TELESCOPE 6F 150CM','VESSCIDE CUTTING BALLOON 2.0X10','VESSCIDE CUTTING BALLOON 2.5X10','VESSCIDE CUTTING BALLOON 3.0X10','VESSCIDE CUTTING BALLOON 3.5X10','DISPOSITIVO ENCERRAMENTO MYNX CONTROL','KIT INSUFLADOR ANGIOPOWER 20CM']
+}},
+{id:'vitamedi',name:'VITAMEDI (Abbott)',color:'#FFF0F5',tc:'#993556',emoji:'💊',
+groups:{
+'Stent Xience Sierra 2.00mm':['XIENCE SIERRA 2.00X08MM','XIENCE SIERRA 2.00X12MM','XIENCE SIERRA 2.00X15MM','XIENCE SIERRA 2.00X18MM','XIENCE SIERRA 2.00X23MM','XIENCE SIERRA 2.00X28MM','XIENCE SIERRA 2.00X33MM','XIENCE SIERRA 2.00X38MM'],
+'Stent Xience Sierra 2.25mm':['XIENCE SIERRA 2.25X08MM','XIENCE SIERRA 2.25X12MM','XIENCE SIERRA 2.25X15MM','XIENCE SIERRA 2.25X18MM','XIENCE SIERRA 2.25X23MM','XIENCE SIERRA 2.25X28MM','XIENCE SIERRA 2.25X33MM','XIENCE SIERRA 2.25X38MM'],
+'Stent Xience Sierra 2.50mm':['XIENCE SIERRA 2.50X08MM','XIENCE SIERRA 2.50X12MM','XIENCE SIERRA 2.50X15MM','XIENCE SIERRA 2.50X18MM','XIENCE SIERRA 2.50X23MM','XIENCE SIERRA 2.50X28MM','XIENCE SIERRA 2.50X33MM','XIENCE SIERRA 2.50X38MM'],
+'Stent Xience Sierra 2.75mm':['XIENCE SIERRA 2.75X08MM','XIENCE SIERRA 2.75X12MM','XIENCE SIERRA 2.75X15MM','XIENCE SIERRA 2.75X18MM','XIENCE SIERRA 2.75X23MM','XIENCE SIERRA 2.75X28MM','XIENCE SIERRA 2.75X33MM','XIENCE SIERRA 2.75X38MM'],
+'Stent Xience Sierra 3.00mm':['XIENCE SIERRA 3.00X08MM','XIENCE SIERRA 3.00X12MM','XIENCE SIERRA 3.00X15MM','XIENCE SIERRA 3.00X18MM','XIENCE SIERRA 3.00X23MM','XIENCE SIERRA 3.00X28MM','XIENCE SIERRA 3.00X33MM','XIENCE SIERRA 3.00X38MM'],
+'Stent Xience Sierra 3.50mm':['XIENCE SIERRA 3.50X08MM','XIENCE SIERRA 3.50X12MM','XIENCE SIERRA 3.50X15MM','XIENCE SIERRA 3.50X18MM','XIENCE SIERRA 3.50X23MM','XIENCE SIERRA 3.50X28MM','XIENCE SIERRA 3.50X33MM','XIENCE SIERRA 3.50X38MM'],
+'Stent Xience Sierra 4.00mm':['XIENCE SIERRA 4.00X08MM','XIENCE SIERRA 4.00X12MM','XIENCE SIERRA 4.00X15MM','XIENCE SIERRA 4.00X18MM','XIENCE SIERRA 4.00X23MM','XIENCE SIERRA 4.00X28MM','XIENCE SIERRA 4.00X33MM','XIENCE SIERRA 4.00X38MM'],
+'Stent Xience Xpedition':['XIENCE XPEDITION 2.5X38','XIENCE XPEDITION 3.5X48']
+}},
+{id:'intermedical',name:'INTERMEDICAL (Terumo)',color:'#FFFBF0',tc:'#854F0B',emoji:'🔧',
+groups:{
+'Bainhas Destination Retas':['DESTINATION RETA CROSS CUT 05FR 45CM','DESTINATION RETA CROSS CUT 06FR 45CM','DESTINATION RETA CROSS CUT 06FR 65CM','DESTINATION RETA CROSS CUT 06FR 90CM','DESTINATION RETA CROSS CUT 07FR 45CM','DESTINATION RETA CROSS CUT 07FR 65CM','DESTINATION RETA CROSS CUT 07FR 90CM','DESTINATION RETA CROSS CUT 08FR 45CM','DESTINATION RETA TUOHY BORST 06FR 45CM','DESTINATION RETA TUOHY BORST 06FR 90CM','DESTINATION RETA TUOHY BORST 07FR 45CM','DESTINATION RETA TUOHY BORST 07FR 90CM','DESTINATION RETA TUOHY BORST 08FR 45CM'],
+'Bainhas Destination Curvas':['DESTINATION HOCKEY STICK CROSS CUT 05FR 45CM','DESTINATION HOCKEY STICK CROSS CUT 06FR 45CM','DESTINATION HOCKEY STICK CROSS CUT 07FR 45CM','DESTINATION MULTI PURPOSE CROSS CUT 05FR 45CM','DESTINATION MULTI PURPOSE CROSS CUT 06FR 45CM','DESTINATION MULTI PURPOSE CROSS CUT 06FR 90CM','DESTINATION MULTI PURPOSE CROSS CUT 07FR 45CM','DESTINATION LIMA CROSS CUT 05FR 45CM','DESTINATION LIMA CROSS CUT 06FR 45CM','DESTINATION LIMA CROSS CUT 07FR 45CM','DESTINATION RDC CROSS CUT 06FR 45CM','DESTINATION RDC CROSS CUT 07FR 45CM'],
+'Bainhas Radial GLIDESHEATH':['GLIDESHEATH SLENDER 5FR 10X15,5CM','GLIDESHEATH SLENDER 5FR 16X21,5CM','GLIDESHEATH SLENDER 6FR 10X15,5CM','GLIDESHEATH SLENDER 6FR 16X21,5CM','GLIDESHEATH SLENDER 7FR 10X15,5CM','GLIDESHEATH SLENDER 7FR 16X21,5CM'],
+'Cateteres RADIFOCUS':['RADIFOCUS JD 04FR 3,5X100CM','RADIFOCUS JD 04FR 4,0X100CM','RADIFOCUS JD 05FR 3,5X100CM','RADIFOCUS JD 05FR 4,0X100CM','RADIFOCUS JD 06FR 3,5X100CM','RADIFOCUS JD 06FR 4,0X100CM','RADIFOCUS JE 04FR 3,5X100CM','RADIFOCUS JE 04FR 4,0X100CM','RADIFOCUS JE 05FR 3,5X100CM','RADIFOCUS JE 05FR 4,0X100CM','RADIFOCUS JE 06FR 3,5X100CM','RADIFOCUS JE 06FR 4,0X100CM','RADIFOCUS MP 05FR 3,0X100CM','RADIFOCUS MP 05FR 3,5X100CM','RADIFOCUS PIGTAIL 05FR 155G 5,5X110CM','RADIFOCUS MAMARIO 05FR 100CM','RADIFOCUS MAMARIO 06FR 100CM'],
+'Cateteres APT Medical':['APT MEDICAL JL 3,5 05FR 100CM','APT MEDICAL JL 04 05FR 100CM','APT MEDICAL JR 3,5 05FR 100CM','APT MEDICAL JR 04 05FR 100CM','APT MEDICAL JL 3,5 06FR 100CM','APT MEDICAL JR 3,5 06FR 100CM','APT MEDICAL TIG 05FR 100CM','APT MEDICAL MPA 06FR 100CM'],
+'Balão PANTERA PRO':['PANTERA PRO 2,0X10MM','PANTERA PRO 2,0X15MM','PANTERA PRO 2,5X10MM','PANTERA PRO 2,5X15MM','PANTERA PRO 3,0X10MM','PANTERA PRO 3,0X15MM','PANTERA PRO 3,5X10MM','PANTERA PRO 3,5X15MM','PANTERA PRO 4,0X10MM','PANTERA PRO 4,0X15MM'],
+'Cateteres NAVICROSS':['NAVICROSS ANGULADA 04FR 135CM','NAVICROSS ANGULADA 04FR 150CM','NAVICROSS RETA 04FR 135CM','NAVICROSS RETA 04FR 150CM'],
+'Outros INTERMEDICAL':['FORTRESS RETA 04FR 45CM','FORTRESS RETA 04FR 100CM','COCOON DELIVERY 06FR','URSA JD 3.5 5FR 100CM','URSA JD 4.0 5FR 100CM','URSA PIGTAIL 155G 05FR 110CM']
+}},
+{id:'polymedical',name:'POLYMEDICAL',color:'#F0FAF4',tc:'#2E7D32',emoji:'🔩',
+groups:{
+'Introdutores Curtos':['INT CURTO 5F X 13CM','INT CURTO 6F X 13CM','INT CURTO 7F X 13CM','INT CURTO 8F X 13CM','INT CURTO 9F X 13CM','INT CURTO 10F X 13CM','INT CURTO 11F X 13CM','INT CURTO 12F X 13CM'],
+'Introdutores Longos RAABE/BALKIN':['INT LONGO 6F X 40CM BALKIN','INT LONGO 6F X 55CM RAABE','INT LONGO 6F X 70CM RAABE','INT LONGO 6F X 90CM RAABE','INT LONGO 7F X 40CM BALKIN','INT LONGO 7F X 55CM RAABE','INT LONGO 7F X 70CM RAABE','INT LONGO 7F X 90CM RAABE','INT LONGO 8F X 40CM BALKIN','INT LONGO 8F X 55CM RAABE','INT LONGO 8F X 70CM RAABE','INT LONGO 8F X 90CM RAABE','INT LONGO 9F X 70CM RAABE'],
+'Introdutores Longos MULLINS':['INT LONGO 10F X 75CM MULLINS','INT LONGO 12F X 75CM MULLINS','INT LONGO 12F X 80CM']
+}},
+{id:'terumo',name:'TERUMO',color:'#FFF5F5',tc:'#C62828',emoji:'⭕',
+groups:{
+'Cateter Balão RYUREI':['RYUREI 1,00X5 (DC-RR1005HH)','RYUREI 1,25X10 (DC-RR1210HH)','RYUREI 1,25X15 (DC-RR1215HH)','RYUREI 1,50X10 (DC-RR1510HH)','RYUREI 1,50X15 (DC-RR1515HH)','RYUREI 1,50X20 (DC-RR1520HH)','RYUREI 2,00X10 (DC-RR2010HHW)','RYUREI 2,00X15 (DC-RR2015HHW)','RYUREI 2,00X20 (DC-RR2020HHW)','RYUREI 2,25X10 (DC-RR2210HHW)','RYUREI 2,25X15 (DC-RR2215HHW)','RYUREI 2,25X20 (DC-RR2220HHW)','RYUREI 2,50X10 (DC-RR2510HHW)','RYUREI 2,50X15 (DC-RR2515HHW)','RYUREI 2,50X20 (DC-RR2520HHW)','RYUREI 2,75X10 (DC-RR2710HHW)','RYUREI 2,75X15 (DC-RR2715HHW)','RYUREI 2,75X20 (DC-RR2720HHW)','RYUREI 3,00X10 (DC-RR3010HHW)','RYUREI 3,00X15 (DC-RR3015HHW)','RYUREI 3,00X20 (DC-RR3020HHW)','RYUREI 3,50X10 (DC-RR3510HHW)','RYUREI 3,50X15 (DC-RR3515HHW)','RYUREI 3,50X20 (DC-RR3520HHW)'],
+'Cateter Balão ACCUFORCE':['ACCUFORCE 2,00X6 (DC-RM2006HSW)','ACCUFORCE 2,00X8 (DC-RM2008HSW)','ACCUFORCE 2,00X12 (DC-RM2012HHW)','ACCUFORCE 2,00X15 (DC-RM2015HHW)','ACCUFORCE 2,00X20 (DC-RM2020HHW)','ACCUFORCE 2,25X6 (DC-RM2206HSW)','ACCUFORCE 2,25X8 (DC-RM2208HSW)','ACCUFORCE 2,25X12 (DC-RM2212HHW)','ACCUFORCE 2,25X15 (DC-RM2215HHW)','ACCUFORCE 2,25X20 (DC-RM2220HHW)','ACCUFORCE 2,50X6 (DC-RM2506HSW)','ACCUFORCE 2,50X8 (DC-RM2508HSW)','ACCUFORCE 2,50X12 (DC-RM2512HHW)','ACCUFORCE 2,50X15 (DC-RM2515HHW)','ACCUFORCE 2,50X20 (DC-RM2520HHW)','ACCUFORCE 2,50X25 (DC-RM2525HHW)','ACCUFORCE 2,50X30 (DC-RM2530HHW)','ACCUFORCE 2,75X6 (DC-RM2706HSW)','ACCUFORCE 2,75X8 (DC-RM2708HSW)','ACCUFORCE 2,75X12 (DC-RM2712HHW)','ACCUFORCE 2,75X15 (DC-RM2715HW)','ACCUFORCE 2,75X20 (DC-RM2720HHW)','ACCUFORCE 3,00X6 (DC-RM3006HSW)','ACCUFORCE 3,00X8 (DC-RM3008HSW)','ACCUFORCE 3,00X12 (DC-RM3012HHW)','ACCUFORCE 3,00X15 (DC-RM3015HHW)','ACCUFORCE 3,00X20 (DC-RM3020HHW)','ACCUFORCE 3,00X25 (DC-RM3025HHW)','ACCUFORCE 3,00X30 (DC-RM3030HHW)','ACCUFORCE 3,25X6 (DC-RM3206HSW)','ACCUFORCE 3,25X8 (DC-RM3208HSW)','ACCUFORCE 3,25X12 (DC-RM3212HHW)','ACCUFORCE 3,25X15 (DC-RM3215HHW)','ACCUFORCE 3,25X20 (DC-RM3220HHW)','ACCUFORCE 3,50X6 (DC-RM3506HSW)','ACCUFORCE 3,50X8 (DC-RM3508HSW)','ACCUFORCE 3,50X12 (DC-RM3512HHW)','ACCUFORCE 3,50X15 (DC-RM3515HHW)','ACCUFORCE 3,50X20 (DC-RM3520HHW)','ACCUFORCE 3,50X25 (DC-RM3525HHW)','ACCUFORCE 3,50X30 (DC-RM3530HHW)','ACCUFORCE 3,75X6 (DC-RM3706HSW)','ACCUFORCE 3,75X8 (DC-RM3708HSW)','ACCUFORCE 3,75X12 (DC-RM3712HHW)','ACCUFORCE 3,75X15 (DC-RM3715HHW)','ACCUFORCE 3,75X20 (DC-RM3720HHW)','ACCUFORCE 4,00X6 (DC-RM4006HSW)','ACCUFORCE 4,00X8 (DC-RM4008HSW)','ACCUFORCE 4,00X12 (DC-RM4012HHW)','ACCUFORCE 4,00X15 (DC-RM4015HHW)','ACCUFORCE 4,00X20 (DC-RM4020HHW)','ACCUFORCE 4,50X6 (DC-RM4506HSW)','ACCUFORCE 4,50X8 (DC-RM4508HSW)','ACCUFORCE 4,50X12 (DC-RM4512HSW)','ACCUFORCE 4,50X15 (DC-RM4515HSW)','ACCUFORCE 5,00X6 (DC-RM5006HSW)','ACCUFORCE 5,00X8 (DC-RM5008HSW)','ACCUFORCE 5,00X12 (DC-RM5012HSW)','ACCUFORCE 5,00X15 (DC-RM5015HSW)'],
+
+
+'Stent Nagomi 2.00mm':['NAGOMI 2,00X9 (DE-RS2009ASM)','NAGOMI 2,00X12 (DE-RS2012ASM)','NAGOMI 2,00X15 (DE-RS2015ASM)','NAGOMI 2,00X18 (DE-RS2018ASM)','NAGOMI 2,00X21 (DE-RS2021ASM)','NAGOMI 2,00X24 (DE-RS2024ASM)','NAGOMI 2,00X28 (DE-RS2028ASM)','NAGOMI 2,00X33 (DE-RS2033ASM)','NAGOMI 2,00X38 (DE-RS2038ASM)','NAGOMI 2,00X44 (DE-RS2044ASM)','NAGOMI 2,00X50 (DE-RS2050ASM)'],
+'Stent Nagomi 2.50mm':['NAGOMI 2,50X9 (DE-RS2509ASM)','NAGOMI 2,50X12 (DE-RS2512ASM)','NAGOMI 2,50X15 (DE-RS2515ASM)','NAGOMI 2,50X18 (DE-RS2518ASM)','NAGOMI 2,50X21 (DE-RS2521ASM)','NAGOMI 2,50X24 (DE-RS2524ASM)','NAGOMI 2,50X28 (DE-RS2528ASM)','NAGOMI 2,50X33 (DE-RS2533ASM)','NAGOMI 2,50X38 (DE-RS2538ASM)','NAGOMI 2,50X44 (DE-RS2544ASM)','NAGOMI 2,50X50 (DE-RS2550ASM)'],
+'Stent Nagomi 3.00mm':['NAGOMI 3,00X9 (DE-RS3009ASM)','NAGOMI 3,00X12 (DE-RS3012ASM)','NAGOMI 3,00X15 (DE-RS3015ASM)','NAGOMI 3,00X18 (DE-RS3018ASM)','NAGOMI 3,00X21 (DE-RS3021ASM)','NAGOMI 3,00X24 (DE-RS3024ASM)','NAGOMI 3,00X28 (DE-RS3028ASM)','NAGOMI 3,00X33 (DE-RS3033ASM)','NAGOMI 3,00X38 (DE-RS3038ASM)','NAGOMI 3,00X44 (DE-RS3044ASM)','NAGOMI 3,00X50 (DE-RS3050ASM)'],
+'Stent Nagomi 3.50mm':['NAGOMI 3,50X9 (DE-RS3509ASM)','NAGOMI 3,50X12 (DE-RS3512ASM)','NAGOMI 3,50X15 (DE-RS3515ASM)','NAGOMI 3,50X18 (DE-RS3518ASM)','NAGOMI 3,50X21 (DE-RS3521ASM)','NAGOMI 3,50X24 (DE-RS3524ASM)','NAGOMI 3,50X28 (DE-RS3528ASM)','NAGOMI 3,50X33 (DE-RS3533ASM)','NAGOMI 3,50X38 (DE-RS3538ASM)','NAGOMI 3,50X44 (DE-RS3544ASM)','NAGOMI 3,50X50 (DE-RS3550ASM)'],
+'Stent Nagomi 4.50mm':['NAGOMI 4,50X9 (DE-RS4509ASM)','NAGOMI 4,50X12 (DE-RS4512ASM)','NAGOMI 4,50X15 (DE-RS4515ASM)','NAGOMI 4,50X18 (DE-RS4518ASM)','NAGOMI 4,50X21 (DE-RS4521ASM)','NAGOMI 4,50X24 (DE-RS4524ASM)','NAGOMI 4,50X28 (DE-RS4528ASM)','NAGOMI 4,50X33 (DE-RS4533ASM)','NAGOMI 4,50X38 (DE-RS4538ASM)','NAGOMI 4,50X44 (DE-RS4544ASM)','NAGOMI 4,50X50 (DE-RS4550ASM)']
+}}
+];
+
+// Estado
+let quantities={}, openSup={}, histLocal=[], sala='SALA 01', filter='';
+let itensDinamicos={};  // {supId: {grupo: [itens adicionados]}}
+let painelFiltro='todos', todosPedidos={}, usuarioLogado=null;
+let favFiltro='todos';
+let favoritos={};   // chave: sid+'||'+item → true
+let ocultos={};     // chave: sid+'||'+item → true (gerenciado pela gestão, salvo no Firebase)
+SUPPLIERS.forEach(s=>openSup[s.id]=false);
+
+function salvarLocal(){try{localStorage.setItem('hemo_qty',JSON.stringify(quantities));}catch(e){}}
+function salvarHistLocal(){try{localStorage.setItem('hemo_hist',JSON.stringify(histLocal));}catch(e){}}
+function salvarFavoritos(){try{localStorage.setItem('hemo_favs',JSON.stringify(favoritos));}catch(e){}}
+function carregarLocal(){
+  try{const r=localStorage.getItem('hemo_qty');if(r)quantities=JSON.parse(r);}catch(e){}
+  try{const r=localStorage.getItem('hemo_hist');if(r)histLocal=JSON.parse(r);}catch(e){}
+  try{const r=localStorage.getItem('hemo_favs');if(r)favoritos=JSON.parse(r);}catch(e){}
+}
+function isFav(sid,item){return !!favoritos[sid+'||'+item];}
+function isOculto(sid,item){return !!ocultos[sid+'||'+item];}
+
+// Carregar ocultos do Firebase
+function carregarOcultos(){
+  onValue(ref(db,'ocultos'),snap=>{
+    ocultos={};
+    if(snap.exists())ocultos=snap.val()||{};
+    renderSuppliers();
+    if(usuarioLogado)renderMateriaisGestao();
+  });
+}
+
+// Carregar itens dinâmicos do Firebase
+function carregarItensDinamicos(){
+  onValue(ref(db,'itensDinamicos'),snap=>{
+    itensDinamicos={};
+    if(snap.exists())itensDinamicos=snap.val()||{};
+    renderSuppliers();
+    if(usuarioLogado)renderMateriaisGestao();
+  });
+}
+
+// Retorna todos os itens de um supplier (base + dinâmicos)
+function todosItens(s){
+  let base={};
+  Object.entries(s.groups).forEach(([g,items])=>base[g]=[...items]);
+  const din=itensDinamicos[s.id]||{};
+  Object.entries(din).forEach(([g,items])=>{
+    if(!base[g])base[g]=[];
+    items.forEach(i=>{if(!base[g].includes(i))base[g].push(i);});
+  });
+  return base;
+}
+
+function key(sid,item){return sid+'||'+item;}
+function getQ(sid,item){return quantities[key(sid,item)]||0;}
+function totalItems(){return Object.values(quantities).reduce((a,b)=>a+b,0);}
+
+window.setSala=function(s){
+  sala=s;
+  document.getElementById('btn-s1').className='sala-btn'+(s==='SALA 01'?' active':'');
+  document.getElementById('btn-s2').className='sala-btn'+(s==='SALA 02'?' active':'');
+  renderSuppliers();
+};
+
+window.filterItems=function(v){filter=v.toLowerCase();renderSuppliers();};
+
+function render(){renderSuppliers();renderHistLocal();updateFab();}
+
+function renderSuppliers(){
+  const c=document.getElementById('sup-list');
+  let html='';
+  SUPPLIERS.forEach(s=>{
+    const grupos=todosItens(s);
+    let allItems=[];
+    Object.entries(grupos).forEach(([g,items])=>allItems=allItems.concat(items));
+    // Filtrar ocultos (só se já carregou do Firebase)
+    let visiveis=allItems.filter(i=>!isOculto(s.id,i));
+    // Filtrar favoritos se necessário
+    if(favFiltro==='favoritos') visiveis=visiveis.filter(i=>isFav(s.id,i));
+    // Filtrar busca
+    if(filter) visiveis=visiveis.filter(i=>i.toLowerCase().includes(filter));
+    // Sempre mostrar fornecedor mesmo sem itens visíveis se ainda carregando
+    if(!visiveis.length&&(Object.keys(ocultos).length>0||favFiltro==='favoritos'||filter))return;
+    if(!allItems.length)return;
+    const supQty=visiveis.reduce((a,i)=>a+getQ(s.id,i),0);
+    const isOpen=openSup[s.id];
+    const visSet=new Set(visiveis);
+    html+=`<div class="sup-card"><div class="sup-head" onclick="toggleSup('${s.id}')">
+      <div class="sup-icon" style="background:${s.color}">${s.emoji}</div>
+      <div style="flex:1">
+        <div class="sup-name">${s.name}</div>
+        <div class="sup-meta">${visiveis.length} itens${supQty>0?` · <strong style="color:${s.tc}">${supQty} no pedido</strong>`:''}</div>
+      </div>
+      <span class="chev${isOpen?' open':''}">⌄</span>
+    </div>`;
+    if(isOpen){
+      html+='<div class="items">';
+      // Favoritos no topo
+      const favItems=visiveis.filter(i=>isFav(s.id,i));
+      if(favItems.length&&favFiltro!=='favoritos'){
+        html+=`<div class="group-label" style="color:#f59e0b;background:#fffbeb">⭐ Favoritos</div>`;
+        favItems.forEach(item=>{ html+=renderItem(s,item); });
+      }
+      // Grupos normais (base + dinâmicos)
+      Object.entries(grupos).forEach(([g,items])=>{
+        const show=items.filter(i=>visSet.has(i)&&(favFiltro==='favoritos'||!isFav(s.id,i)));
+        if(!show.length)return;
+        html+=`<div class="group-label">${g}</div>`;
+        show.forEach(item=>{html+=renderItem(s,item);});
+      });
+      html+='</div>';
+    }
+    html+='</div>';
+  });
+  if(!html){
+    if(favFiltro==='favoritos')html='<div class="empty">⭐ Nenhum favorito ainda.<br><span style="font-size:12px">Toque na estrela ☆ ao lado de um material para favoritar.</span></div>';
+    else html='<div class="empty">Nenhum item encontrado</div>';
+  }
+  c.innerHTML=html;
+}
+
+function renderItem(s,item){
+  const q=getQ(s.id,item);
+  const esc=item.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const fav=isFav(s.id,item);
+  return `<div class="item">
+    <span class="item-fav" onclick="toggleFav('${s.id}','${esc}')" title="${fav?'Remover dos favoritos':'Adicionar aos favoritos'}">${fav?'⭐':'☆'}</span>
+    <div class="item-name">${item}</div>
+    <div class="qty-ctrl">
+      <button class="qb" onclick="chg('${s.id}','${esc}',-1)">−</button>
+      <div class="qv${q>0?' has':''}" id="qv-${s.id}-${Math.abs(hashStr(item))}">${q}</div>
+      <button class="qb" onclick="chg('${s.id}','${esc}',1)">+</button>
+    </div>
+  </div>`;
+}
+
+function hashStr(s){let h=0;for(let i=0;i<s.length;i++)h=Math.imul(31,h)+s.charCodeAt(i)|0;return h;}
+
+window.toggleFav=function(sid,item){
+  const k=sid+'||'+item;
+  if(favoritos[k])delete favoritos[k]; else favoritos[k]=true;
+  salvarFavoritos();
+  renderSuppliers();
+};
+
+window.setFavFiltro=function(f){
+  favFiltro=f;
+  document.getElementById('ff-todos').className='fav-btn'+(f==='todos'?' active':'');
+  document.getElementById('ff-favoritos').className='fav-btn'+(f==='favoritos'?' active':'');
+  renderSuppliers();
+};
+
+window.setPainelSubTab=function(t){
+  document.getElementById('pg-pedidos').style.display=t==='pedidos'?'':'none';
+  document.getElementById('pg-materiais').style.display=t==='materiais'?'':'none';
+  document.getElementById('pst-pedidos').className='painel-sub-tab'+(t==='pedidos'?' active':'');
+  document.getElementById('pst-materiais').className='painel-sub-tab'+(t==='materiais'?' active':'');
+  if(t==='materiais')renderMateriaisGestao();
+};
+
+function renderMateriaisGestao(){
+  // Popular selects de fornecedor
+  const selSup=document.getElementById('add-sup');
+  if(selSup&&selSup.options.length===1){
+    SUPPLIERS.forEach(s=>{ const o=document.createElement('option');o.value=s.id;o.textContent=s.emoji+' '+s.name;selSup.appendChild(o); });
+  }
+  const c=document.getElementById('mat-list');
+  let html='';
+  SUPPLIERS.forEach(s=>{
+    const grupos=todosItens(s);
+    let allItems=[];
+    Object.entries(grupos).forEach(([g,items])=>allItems=allItems.concat(items));
+    const ocultosCont=allItems.filter(i=>isOculto(s.id,i)).length;
+    html+=`<div class="sup-card" style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:#f8f8f8;border-bottom:1px solid #eee">
+        <div class="sup-icon" style="background:${s.color}">${s.emoji}</div>
+        <div style="flex:1"><div class="sup-name">${s.name}</div>
+        <div class="sup-meta">${allItems.length} itens · <span style="color:#C62828">${ocultosCont} ocultos</span></div></div>
+      </div>`;
+    Object.entries(grupos).forEach(([g,items])=>{
+      html+=`<div class="mat-group-label">${g}</div>`;
+      const din=((itensDinamicos[s.id]||{})[g]||[]);
+      items.forEach(item=>{
+        const oculto=isOculto(s.id,item);
+        const esc=item.replace(/\/g,'\\').replace(/'/g,"\'");
+        const isDin=din.includes(item);
+        html+=`<div class="mat-item">
+          <span class="mat-name">${item}${isDin?'<span style="font-size:10px;color:#1a73e8;margin-left:4px;font-weight:600">NOVO</span>':''}</span>
+          <button class="mat-toggle ${oculto?'oculto':'ativo'}" onclick="toggleOculto('${s.id}','${esc}')">${oculto?'👁 Mostrar':'🚫 Ocultar'}</button>
+          ${isDin?`<button class="mat-del" onclick="excluirItem('${s.id}','${g.replace(/'/g,"\'")}','${esc}')">🗑</button>`:''}
+        </div>`;
+      });
+    });
+    html+='</div>';
+  });
+  c.innerHTML=html;
+}
+
+window.atualizarGrupos=function(){
+  const sid=document.getElementById('add-sup').value;
+  const selGrp=document.getElementById('add-grp');
+  selGrp.innerHTML='<option value="">Grupo...</option>';
+  if(!sid)return;
+  const s=SUPPLIERS.find(x=>x.id===sid);
+  if(!s)return;
+  const grupos=todosItens(s);
+  Object.keys(grupos).forEach(g=>{ const o=document.createElement('option');o.value=g;o.textContent=g;selGrp.appendChild(o); });
+};
+
+window.adicionarItem=async function(){
+  const sid=document.getElementById('add-sup').value;
+  const grp=document.getElementById('add-grp').value;
+  const nome=document.getElementById('add-nome').value.trim().toUpperCase();
+  if(!sid||!grp||!nome){showToast('Preencha fornecedor, grupo e nome.');return;}
+  // Verificar duplicado
+  const s=SUPPLIERS.find(x=>x.id===sid);
+  const grupos=todosItens(s);
+  if((grupos[grp]||[]).includes(nome)){showToast('Este item já existe neste grupo.');return;}
+  // Salvar no Firebase
+  const dinAtual=((itensDinamicos[sid]||{})[grp])||[];
+  const novaLista=[...dinAtual,nome];
+  try{
+    await set(ref(db,`itensDinamicos/${sid}/${grp.replace(/[.#$\[\]]/g,'_')}`),novaLista);
+    document.getElementById('add-nome').value='';
+    showToast('✅ Item adicionado para todos!');
+  }catch(e){showToast('Erro ao adicionar item.');}
+};
+
+window.excluirItem=async function(sid,grp,item){
+  if(!confirm(`Excluir permanentemente:\n${item}?`))return;
+  const chaveGrp=grp.replace(/[.#$\[\]]/g,'_');
+  const dinAtual=((itensDinamicos[sid]||{})[chaveGrp])||[];
+  const novaLista=dinAtual.filter(i=>i!==item);
+  try{
+    if(novaLista.length>0){
+      await set(ref(db,`itensDinamicos/${sid}/${chaveGrp}`),novaLista);
+    } else {
+      await remove(ref(db,`itensDinamicos/${sid}/${chaveGrp}`));
+    }
+    showToast('🗑 Item excluído!');
+  }catch(e){showToast('Erro ao excluir.');}
+};
+
+window.toggleOculto=async function(sid,item){
+  const k=sid+'||'+item;
+  if(ocultos[k])delete ocultos[k]; else ocultos[k]=true;
+  try{
+    await update(ref(db,'ocultos'),{[k]: ocultos[k]||null});
+    showToast(ocultos[k]?'🚫 Material ocultado de todos':'👁 Material visível novamente');
+    renderMateriaisGestao();
+    renderSuppliers();
+  }catch(e){showToast('Erro ao salvar.');}
+};
+
+window.toggleSup=function(id){openSup[id]=!openSup[id];renderSuppliers();};
+
+window.chg=function(sid,item,d){
+  const k=key(sid,item);
+  quantities[k]=Math.max(0,(quantities[k]||0)+d);
+  renderSuppliers();updateFab();salvarLocal();
+};
+
+function updateFab(){
+  const t=totalItems();
+  document.getElementById('fab').style.display=t>0?'flex':'none';
+  document.getElementById('fab-n').textContent=t;
+}
+
+window.openModal=function(){
+  const now=new Date();
+  document.getElementById('m-sub').textContent=sala+' · '+now.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  let html='';
+  SUPPLIERS.forEach(s=>{
+    let allItems=[];Object.entries(s.groups).forEach(([g,items])=>allItems=allItems.concat(items));
+    const sel=allItems.filter(i=>getQ(s.id,i)>0);
+    if(!sel.length)return;
+    html+=`<div class="msec"><div class="msec-title">${s.emoji} ${s.name}</div>`;
+    sel.forEach(i=>html+=`<div class="mitem"><span>${i}</span><span>${getQ(s.id,i)} un</span></div>`);
+    html+='</div>';
+  });
+  document.getElementById('m-content').innerHTML=html;
+  document.getElementById('modal').style.display='flex';
+};
+
+window.closeModal=function(){document.getElementById('modal').style.display='none';};
+window.closeBg=function(e){if(e.target.id==='modal')closeModal();};
+
+function buildEmailBody(){
+  const now=new Date();
+  let body='PEDIDO DE REPOSIÇÃO — '+sala+'\n';
+  body+='Data: '+now.toLocaleDateString('pt-BR')+' às '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'\n\n';
+  SUPPLIERS.forEach(s=>{
+    let allItems=[];Object.entries(s.groups).forEach(([g,items])=>allItems=allItems.concat(items));
+    const sel=allItems.filter(i=>getQ(s.id,i)>0);
+    if(!sel.length)return;
+    body+='\n[ '+s.name+' ]\n';
+    sel.forEach(i=>body+='  • '+i+': '+getQ(s.id,i)+' un\n');
+  });
+  body+='\nTotal: '+totalItems()+' item(ns)';
+  return body;
+}
+
+window.confirmOrder=async function(){
+  const emailTo=document.getElementById('email-to').value.trim();
+  const now=new Date();
+  const bySup={};let total=0;
+  SUPPLIERS.forEach(s=>{
+    let allItems=[];Object.entries(s.groups).forEach(([g,items])=>allItems=allItems.concat(items));
+    const sel=allItems.filter(i=>getQ(s.id,i)>0).map(i=>({name:i,qty:getQ(s.id,i)}));
+    if(sel.length){bySup[s.name]=sel;total+=sel.reduce((a,x)=>a+x.qty,0);}
+  });
+  const pedido={
+    sala,
+    data:now.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+    timestamp:now.getTime(),
+    bySup,total,
+    emailSolicitante:emailTo||'',
+    status:'pendente'
+  };
+  // Salvar no Firebase
+  try{
+    await push(ref(db,'pedidos'),pedido);
+  }catch(e){console.error('Firebase error:',e);}
+  // Histórico local
+  histLocal.push(pedido);
+  // Email
+  if(emailTo){
+    const subject=encodeURIComponent('Pedido Reposição — '+sala+' — '+now.toLocaleDateString('pt-BR'));
+    const body=encodeURIComponent(buildEmailBody());
+    window.location.href='mailto:'+emailTo+'?subject='+subject+'&body='+body;
+  }
+  quantities={};salvarLocal();salvarHistLocal();
+  closeModal();
+  showToast('✅ Pedido enviado ao painel de gestão!');
+  render();
+};
+
+function renderHistLocal(){
+  const c=document.getElementById('hist-list');
+  document.getElementById('hbadge').textContent=histLocal.length;
+  if(!histLocal.length){c.innerHTML='<div class="empty">📋 Nenhum pedido feito ainda</div>';return;}
+  let html='';
+  [...histLocal].reverse().forEach(o=>{
+    html+=`<div class="hist-card">
+      <div class="hist-top">
+        <span class="hist-date">📅 ${o.data}</span>
+        <div class="hist-tags"><span class="hist-sala">${o.sala}</span><span class="hist-status ${o.status||'pendente'}">${labelStatus(o.status||'pendente')}</span></div>
+      </div>`;
+    Object.entries(o.bySup).forEach(([sup,items])=>{
+      html+=`<div class="hist-sup">${sup}</div>`;
+      html+=`<div class="hist-items">${items.map(i=>'• '+i.qty+'× '+i.name).join('<br>')}</div>`;
+    });
+    html+=`<div style="font-size:11px;color:#aaa;margin-top:6px">${o.total} item(ns)</div></div>`;
+  });
+  c.innerHTML=html;
+}
+
+function labelStatus(s){return s==='pendente'?'⏳ Pendente':s==='andamento'?'🔄 Em andamento':s==='parcial'?'⚠️ Atendido Parcialmente':s==='cancelado'?'❌ Cancelado':'✅ Atendido';}
+
+window.switchTab=function(t){
+  document.getElementById('view-p').style.display=t==='pedido'?'':'none';
+  document.getElementById('view-h').style.display=t==='hist'?'':'none';
+  document.getElementById('view-g').style.display=t==='gestao'?'':'none';
+  document.getElementById('tab-p').className='tab'+(t==='pedido'?' active':'');
+  document.getElementById('tab-h').className='tab'+(t==='hist'?' active':'');
+  document.getElementById('tab-g').className='tab'+(t==='gestao'?' active':'');
+  if(t==='hist')renderHistLocal();
+  if(t==='gestao')renderPainel();
+};
+
+// ── PAINEL DE GESTÃO ──
+window.abrirPainel=function(){
+  if(usuarioLogado){
+    switchTab('gestao');
+  } else {
+    document.getElementById('login-screen').style.display='flex';
+  }
+};
+
+window.voltarPedido=function(){
+  document.getElementById('login-screen').style.display='none';
+};
+
+window.fazerLogin=async function(){
+  const email=document.getElementById('login-email').value.trim();
+  const senha=document.getElementById('login-senha').value;
+  document.getElementById('login-err').textContent='';
+  try{
+    await signInWithEmailAndPassword(auth,email,senha);
+  }catch(e){
+    document.getElementById('login-err').textContent='E-mail ou senha incorretos.';
+  }
+};
+
+window.logoutPainel=async function(){
+  await signOut(auth);
+  usuarioLogado=null;
+  switchTab('pedido');
+};
+
+onAuthStateChanged(auth,user=>{
+  if(user){
+    usuarioLogado=user;
+    document.getElementById('login-screen').style.display='none';
+    switchTab('gestao');
+    carregarPedidosFirebase();
+  }
+});
+
+function carregarPedidosFirebase(){
+  onValue(ref(db,'pedidos'),snap=>{
+    todosPedidos={};
+    snap.forEach(child=>{todosPedidos[child.key]=child.val();});
+    renderPainel();
+  });
+}
+
+window.setPainelFiltro=function(f){
+  painelFiltro=f;
+  ['todos','pendente','andamento','parcial','atendido','cancelado'].forEach(x=>{
+    document.getElementById('f-'+x).className='filter-btn'+(f===x?' active':'');
+  });
+  renderPainel();
+};
+
+function renderPainel(){
+  const c=document.getElementById('painel-list');
+  const lista=Object.entries(todosPedidos).sort((a,b)=>b[1].timestamp-a[1].timestamp);
+  const filtrados=painelFiltro==='todos'?lista:lista.filter(([k,v])=>v.status===painelFiltro);
+  if(!filtrados.length){c.innerHTML='<div class="empty">Nenhum pedido aqui</div>';return;}
+  let html='';
+  filtrados.forEach(([id,p])=>{
+    const st=p.status||'pendente';
+    const cancelStyle=st==='cancelado'?'opacity:0.6;border-color:#ffcdd2;':'';
+    html+=`<div class="painel-card" style="${cancelStyle}">
+      <div class="painel-top">
+        <div class="painel-info">
+          <h3>📅 ${p.data}</h3>
+          <p>${p.sala} · ${p.total} item(ns)</p>
+        </div>
+        <select class="status-select status-${st}" onchange="mudarStatus('${id}',this.value,this)">
+          <option value="pendente" ${st==='pendente'?'selected':''}>⏳ Pendente</option>
+          <option value="andamento" ${st==='andamento'?'selected':''}>🔄 Em andamento</option>
+          <option value="parcial" ${st==='parcial'?'selected':''}>⚠️ Atend. Parcial</option>
+          <option value="atendido" ${st==='atendido'?'selected':''}>✅ Atendido</option>
+          <option value="cancelado" ${st==='cancelado'?'selected':''}>❌ Cancelado</option>
+        </select>
+      </div>
+      <div class="painel-items">`;
+    Object.entries(p.bySup).forEach(([sup,items])=>{
+      html+=`<div class="painel-sup">${sup}</div>`;
+      html+=items.map(i=>`• ${i.qty}× ${i.name}`).join('<br>');
+    });
+    if(p.emailSolicitante)html+=`<div class="painel-email">📧 ${p.emailSolicitante}</div>`;
+    const obs=p.observacao||'';
+    html+=`<div style="margin-top:10px;border-top:1px solid #f0f0f0;padding-top:10px">
+      <div style="font-size:11px;font-weight:700;color:#888;margin-bottom:5px">📝 OBSERVAÇÃO / ITENS FALTANTES</div>
+      <textarea id="obs-${id}" rows="3" style="width:100%;font-size:12px;padding:8px;border:1px solid #e0e0e0;border-radius:8px;resize:vertical;outline:none;font-family:inherit;color:#333" placeholder="Ex: Faltou SYNERGY XD 3X12MM e RYUREI 2,50X15...">${obs}</textarea>
+      <button onclick="salvarObs('${id}')" style="margin-top:6px;padding:7px 16px;background:#1a73e8;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">Salvar observação</button>
+    </div>`;
+    html+=`</div></div>`;
+  });
+  c.innerHTML=html;
+}
+
+window.mudarStatus=async function(id,novoStatus,sel){
+  if(novoStatus==='cancelado'){
+    if(!confirm('Tem certeza que deseja CANCELAR este pedido? Esta ação ficará registrada no histórico.')){
+      sel.value=sel.dataset.prev||'pendente';
+      return;
+    }
+  }
+  sel.dataset.prev=novoStatus;
+  try{
+    await update(ref(db,`pedidos/${id}`),{status:novoStatus});
+    sel.className='status-select status-'+novoStatus;
+    showToast(novoStatus==='cancelado'?'❌ Pedido cancelado':'Status atualizado!');
+  }catch(e){showToast('Erro ao atualizar.');}
+};
+
+window.salvarObs=async function(id){
+  const obs=document.getElementById('obs-'+id).value.trim();
+  try{
+    await update(ref(db,`pedidos/${id}`),{observacao:obs});
+    showToast('✅ Observação salva!');
+  }catch(e){showToast('Erro ao salvar observação.');}
+};
+
+window.abrirAjuda=function(){document.getElementById('help-screen').style.display='block';};
+window.fecharAjuda=function(){document.getElementById('help-screen').style.display='none';};
+
+function showToast(m){
+  const t=document.getElementById('toast');
+  t.textContent=m;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// INIT — renderiza imediatamente com dados locais, Firebase atualiza depois
+carregarLocal();
+render(); // renderiza já com os fornecedores sem esperar Firebase
+carregarOcultos();
+carregarItensDinamicos();
+</script>
+</body>
+</html>
