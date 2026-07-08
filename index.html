@@ -533,13 +533,15 @@ function renderSuppliers(){
     const grupos=todosItens(s);
     let allItems=[];
     Object.entries(grupos).forEach(([g,items])=>allItems=allItems.concat(items));
-    // Filtrar ocultos
+    // Filtrar ocultos (só se já carregou do Firebase)
     let visiveis=allItems.filter(i=>!isOculto(s.id,i));
     // Filtrar favoritos se necessário
     if(favFiltro==='favoritos') visiveis=visiveis.filter(i=>isFav(s.id,i));
     // Filtrar busca
     if(filter) visiveis=visiveis.filter(i=>i.toLowerCase().includes(filter));
-    if(!visiveis.length)return;
+    // Sempre mostrar fornecedor mesmo sem itens visíveis se ainda carregando
+    if(!visiveis.length&&(Object.keys(ocultos).length>0||favFiltro==='favoritos'||filter))return;
+    if(!allItems.length)return;
     const supQty=visiveis.reduce((a,i)=>a+getQ(s.id,i),0);
     const isOpen=openSup[s.id];
     const visSet=new Set(visiveis);
@@ -953,11 +955,11 @@ function showToast(m){
   setTimeout(()=>t.classList.remove('show'),3000);
 }
 
-// INIT
+// INIT — renderiza imediatamente com dados locais, Firebase atualiza depois
 carregarLocal();
+render(); // renderiza já com os fornecedores sem esperar Firebase
 carregarOcultos();
 carregarItensDinamicos();
-render();
 </script>
 </body>
 </html>
