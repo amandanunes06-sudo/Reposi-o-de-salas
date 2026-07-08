@@ -533,15 +533,14 @@ function renderSuppliers(){
     const grupos=todosItens(s);
     let allItems=[];
     Object.entries(grupos).forEach(([g,items])=>allItems=allItems.concat(items));
-    // Filtrar ocultos (só se já carregou do Firebase)
+    if(!allItems.length)return;
+    // Filtrar ocultos
     let visiveis=allItems.filter(i=>!isOculto(s.id,i));
-    // Filtrar favoritos se necessário
+    // Filtrar favoritos
     if(favFiltro==='favoritos') visiveis=visiveis.filter(i=>isFav(s.id,i));
     // Filtrar busca
     if(filter) visiveis=visiveis.filter(i=>i.toLowerCase().includes(filter));
-    // Sempre mostrar fornecedor mesmo sem itens visíveis se ainda carregando
-    if(!visiveis.length&&(Object.keys(ocultos).length>0||favFiltro==='favoritos'||filter))return;
-    if(!allItems.length)return;
+    if(!visiveis.length)return;
     const supQty=visiveis.reduce((a,i)=>a+getQ(s.id,i),0);
     const isOpen=openSup[s.id];
     const visSet=new Set(visiveis);
@@ -642,7 +641,7 @@ function renderMateriaisGestao(){
       const din=((itensDinamicos[s.id]||{})[g]||[]);
       items.forEach(item=>{
         const oculto=isOculto(s.id,item);
-        const esc=item.replace(/\/g,'\\').replace(/'/g,"\'");
+        const esc=item.replace(/'/g,"\\'");
         const isDin=din.includes(item);
         html+=`<div class="mat-item">
           <span class="mat-name">${item}${isDin?'<span style="font-size:10px;color:#1a73e8;margin-left:4px;font-weight:600">NOVO</span>':''}</span>
